@@ -38,7 +38,7 @@ equivalenciaMaterialService.buscarPorIdMaterialSolicitud = async (conn, id_mater
 equivalenciaMaterialService.listarParaEnviarSAP = async (conn, id_solicitud) => {
     try {
         const queryResponse = await conn.query(
-            "select em.id, em.id_material_solicitud, em.valor1, em.unidad_medida1, em.valor2, em.unidad_medida2 \
+            "select em.id, em.id_material_solicitud, em.valor1, em.unidad_medida1, em.valor2, em.unidad_medida2, ms.ampliacion \
             from dino.tsolicitud s \
             inner join dino.tmaterial_solicitud ms on ms.id_solicitud = s.id \
             inner join dino.tequivalencia_material em on em.id_material_solicitud = ms.id \

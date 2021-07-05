@@ -68,6 +68,7 @@ const areaPlanificacionMaterialService = require('../services/areaPlanificacionM
 
 const { validar_codigo_sap, validar_texto } = require('../utils/materialValidator');
 const validator = require('../utils/materialValidator');
+const { cpsaaSapApi } = require('../config');
 //#endregion
 
 const controller = { internal: {}, external: {} };
@@ -161,7 +162,7 @@ controller.external.agregarMaterial = async (req, res) => {
 
         const materiales = [];
         materiales.push(material);
-        const materialesValidados = await validarMateriales(id_solicitud, materiales, enums.tipoCarga.individual);
+        const materialesValidados = await validarMateriales(id_solicitud, materiales, enums.tipoCarga.individual, false);
         const materialValidado = materialesValidados[0];
 
         await client.query("BEGIN");
@@ -279,7 +280,7 @@ controller.external.agregarMateriales = async (req, res) => {
         }
         //#endregion
 
-        const materialesValidados = await validarMateriales(id_solicitud, materiales, enums.tipoCarga.masivo);
+        const materialesValidados = await validarMateriales(id_solicitud, materiales, enums.tipoCarga.masivo, false);
 
         await client.query("BEGIN");
 
@@ -399,7 +400,7 @@ controller.external.actualizarMaterial = async (req, res) => {
             const materiales = [];
             material.id_material_solicitud = id_material_solicitud;
             materiales.push(material);
-            const materialesValidados = await validarMateriales(id_solicitud, materiales, enums.tipoCarga.individual);
+            const materialesValidados = await validarMateriales(id_solicitud, materiales, enums.tipoCarga.individual, false);
             const materialValidado = materialesValidados[0];
 
             await client.query("BEGIN");
@@ -741,14 +742,14 @@ controller.external.esPadre = async (req, res) => {
             return;
         }
 
-        
+
         //#endregion
 
         const count = await materialSolicitudService.esPadre(postgresConn, id_solicitud, denominacion);
 
         response.resultado = 1;
         response.mensaje = "";
-        response.existe = count[0]['count']>0;
+        response.existe = count[0]['count'] > 0;
 
 
         res.status(200).json(response);
@@ -847,9 +848,17 @@ controller.external.crearAmpliacion = async (req, res) => {
             resultado: 0, mensaje: "Error inesperado al crear Ampliación."
         };
 
-        const { material_codigo_sap, centro_codigo_sap, almacen_codigo_sap } = req.body;
+        const { id_solicitud } = req.params;
+        const { material_codigo_sap, material } = req.body;
 
-        //#region Validaciones al request
+        //#region Validaciones
+        if (!id_solicitud || id_solicitud == constantes.emptyString) {
+            response.resultado = 0;
+            response.mensaje = "El campo id_solicitud no tiene un valor válido. Tipo de dato : '" + (typeof id_solicitud) + "', valor = " + id_solicitud;
+            res.status(200).json(response);
+            return;
+        }
+
         if (!material_codigo_sap || material_codigo_sap == constantes.emptyString) {
             response.resultado = 0;
             response.mensaje = "El campo material_codigo_sap no tiene un valor válido. Tipo de dato : '" + (typeof material_codigo_sap) + "', valor = " + material_codigo_sap;
@@ -857,6 +866,21 @@ controller.external.crearAmpliacion = async (req, res) => {
             return;
         }
 
+        if (!material) {
+            response.resultado = 0;
+            response.mensaje = "El campo material no puede ser nulo y debe contener campos";
+            res.status(200).json(response);
+            return;
+        }
+
+        if (!material.campos || material.campos.length === 0) {
+            response.resultado = 0;
+            response.mensaje = "El material debe contener campos";
+            res.status(200).json(response);
+            return;
+        }
+
+        const centro_codigo_sap = obtenerCampoValor(enums.codigo_interno.centro_codigo_sap, material.campos);
         if (!centro_codigo_sap || centro_codigo_sap == constantes.emptyString) {
             response.resultado = 0;
             response.mensaje = "El campo centro_codigo_sap no tiene un valor válido. Tipo de dato : '" + (typeof centro_codigo_sap) + "', valor = " + centro_codigo_sap;
@@ -864,6 +888,7 @@ controller.external.crearAmpliacion = async (req, res) => {
             return;
         }
 
+        const almacen_codigo_sap = obtenerCampoValor(enums.codigo_interno.almacen_codigo_sap, material.campos);
         if (!almacen_codigo_sap || almacen_codigo_sap == constantes.emptyString) {
             response.resultado = 0;
             response.mensaje = "El campo almacen_codigo_sap no tiene un valor válido. Tipo de dato : '" + (typeof almacen_codigo_sap) + "', valor = " + almacen_codigo_sap;
@@ -871,24 +896,98 @@ controller.external.crearAmpliacion = async (req, res) => {
             return;
         }
 
-        const material = await materialSolicitudService.obtenerPorCodigoSap(postgresConn, material_codigo_sap);
-        if (!material) {
+        const solicitud = await solicitudService.obtenerParaValidar(postgresConn, id_solicitud);
+        if (!solicitud) {
+            response.resultado = 0;
+            response.mensaje = "No existe el id_solicitud enviado {" + id_solicitud + "}";
+            res.status(200).json(response);
+            return;
+        }
+        //#endregion
+
+        const request_sap_por_codigo = {
+            codigo: material_codigo_sap,
+            centro: centro_codigo_sap,
+            almacen: almacen_codigo_sap,
+            organizacion_ventas: obtenerCampoValor(enums.codigo_interno.organizacion_ventas, material.campos),
+            canal_distribucion: obtenerCampoValor(enums.codigo_interno.canal_distribucion, material.campos),
+            area_planificacion: obtenerCampoValor(enums.codigo_interno.area_planificacion_tab, material.campos)
+        }
+        const response_sap_por_codigo = await cpsaaApiProvider.consultarCodigoMaterial(request_sap_por_codigo);
+
+        if (response_sap_por_codigo.codigo === 0) {
             response.resultado = 0;
             response.mensaje = "No existe el material_codigo_sap enviado {" + material_codigo_sap + "}";
             res.status(200).json(response);
             return;
         }
 
-        const request_clave = centro_codigo_sap + '_' + almacen_codigo_sap;
-        const material_clave = material.centro_codigo_sap + '_' + material.almacen_codigo_sap;
+        // const request_sap_por_nombre = [obtenerCampoValor(enums.codigo_interno.denominacion, response_sap_por_codigo.lista)];
+        // const response_sap_por_nombre = await cpsaaApiProvider.consultarNombreMaterial(request_sap_por_nombre);
+        // let nombresExistentes = [];
+        // if (response_sap_por_nombre.codigo == 1) {
+        //     nombresExistentes = response_sap_por_nombre.lista;
+        // }
 
-        if(request_clave==material_clave){
+        // const existeDenominacion = existeDenominacionExacta(nombresExistentes, denominacion)
+
+        const denominacion_en_sap = obtenerCampoValor(enums.codigo_interno.denominacion, response_sap_por_codigo.lista);
+        const denominacion_en_request = obtenerCampoValor(enums.codigo_interno.denominacion, material.campos);
+
+        console.log('denominacion_en_sap: ' + denominacion_en_sap);
+        console.log('denominacion_en_request: ' + denominacion_en_request);
+
+        if (denominacion_en_sap != denominacion_en_request) {
             response.resultado = 0;
-            response.mensaje = "No se puede registrar una ampliación con el mismo centro y almacen";
+            response.mensaje = "La denominacion del material enviado no coincide con el material en SAP";
             res.status(200).json(response);
-            return;            
+            return;
         }
-        //#endregion        
+
+        // Validar existe en sap
+        const sap_amp_key = obtenerCampoValor(enums.codigo_interno.centro_codigo_sap, response_sap_por_codigo.lista) + '-' + obtenerCampoValor(enums.codigo_interno.almacen_codigo_sap, response_sap_por_codigo.lista);
+        const request_amp_key = centro_codigo_sap + '-' + almacen_codigo_sap;
+
+        console.log('sap_amp_key: ' + sap_amp_key);
+        console.log('request_amp_key: ' + request_amp_key);
+
+        if (sap_amp_key === request_amp_key) {
+            response.resultado = 0;
+            response.mensaje = "El centro_codigo_sap + almacen_codigo_sap debe ser diferente para la ampliación.";
+            res.status(200).json(response);
+            return;
+        }
+
+        // Validar existe en tramite
+        const denominacion_en_db = await materialSolicitudService.listarPorDenominacionParaAmpliacion(postgresConn, denominacion_en_sap);
+        
+        console.log('denominacion_en_db: ');
+        console.log(denominacion_en_db);
+
+        if (denominacion_en_db) {
+            const response_db=denominacion_en_db[0]
+            const db_amp_key = response_db.centro_codigo_sap + '-' + response_db.almacen_codigo_sap;
+            console.log('request_amp_key: ' + request_amp_key);
+            console.log('db_amp_key: ' + db_amp_key);
+            if (request_amp_key === db_amp_key) {
+                response.resultado = 0;
+                response.mensaje = "Ya existe una ampliacion en trámite para los datos solicitados.";
+                res.status(200).json(response);
+                return;
+            }
+        }
+
+        const nuevoMaterial = { campos: response_sap_por_codigo.lista };
+        material.campos.forEach(element => {
+            nuevoMaterial.campos = removerCampo(element.codigo_interno, nuevoMaterial.campos);
+            nuevoMaterial.campos.push(element);
+        });
+
+
+        const materiales = [];
+        materiales.push(nuevoMaterial);
+        const materialesValidados = await validarMateriales(id_solicitud, materiales, enums.tipoCarga.individual, true);
+        const materialValidado = materialesValidados[0];
 
         await client.query("BEGIN");
         const resultOriginal = await materialSolicitudService.crear(client, id_solicitud, materialValidado);
@@ -930,7 +1029,7 @@ controller.external.crearAmpliacion = async (req, res) => {
 
     } catch (error) {
         await client.query("ROLLBACK");
-        winston.info("Error en materialSolicitudController.external.agregarMaterial. Details: ", error);
+        winston.info("Error en materialSolicitudController.external.crearAmpliacion. Details: ", error);
         res.status(500).send(error);
     } finally {
         client.release();
@@ -1077,10 +1176,9 @@ async function enviarSAP(id_solicitud) {
     }
 };
 
-async function validarMateriales(id_solicitud, materiales, tipo_carga) {
+async function validarMateriales(id_solicitud, materiales, tipo_carga, esAmpliacion) {
     let result = [];
     let tipoOperacion = null;
-    const actualizaciones = [];
 
     let list_campos_decimales = null;
     let list_ramo = null;
@@ -1131,36 +1229,40 @@ async function validarMateriales(id_solicitud, materiales, tipo_carga) {
     let list_proc_sel_modelo = null;
 
     //#region Consulta masiva de denominación en SAP
-    let denominaciones = [];
-    await asyncForEach(materiales, async (material) => {
-        const denominacion = obtenerCampo(enums.codigo_interno.denominacion, material.campos);
-        if (denominacion && (denominacion.valor && denominacion.valor !== '')) {
-            if (!existeEnLista(denominaciones, denominacion.valor)) {
-                denominaciones.push(denominacion.valor);
-            }
-        }
-    });
-
     let denominacionesEnSAP = [];
-    if (denominaciones) {
-        denominacionesEnSAP = await cpsaaApiProvider.consultarNombreMaterial(denominaciones);
+    if (!esAmpliacion) {
+        let denominaciones = [];
+        await asyncForEach(materiales, async (material) => {
+            const denominacion = obtenerCampo(enums.codigo_interno.denominacion, material.campos);
+            if (denominacion && (denominacion.valor && denominacion.valor !== '')) {
+                if (!existeEnLista(denominaciones, denominacion.valor)) {
+                    denominaciones.push(denominacion.valor);
+                }
+            }
+        });
+
+        if (denominaciones) {
+            denominacionesEnSAP = await cpsaaApiProvider.consultarNombreMaterial(denominaciones);
+        }
     }
     //#endregion
 
     //#region Consulta masiva de material_codigo_modelo en SAP
-    let material_codigo_modelos = [];
-    await asyncForEach(materiales, async (material) => {
-        const material_codigo_modelo = obtenerCampo(enums.codigo_interno.material_codigo_modelo, material.campos);
-        if (material_codigo_modelo && (material_codigo_modelo.valor && material_codigo_modelo.valor !== '')) {
-            if (!existeEnLista(material_codigo_modelos, material_codigo_modelo.valor)) {
-                material_codigo_modelos.push(material_codigo_modelo.valor);
+    let modelosEnSAP = { lista: [] };
+    if (!esAmpliacion) {
+        let material_codigo_modelos = [];
+        await asyncForEach(materiales, async (material) => {
+            const material_codigo_modelo = obtenerCampo(enums.codigo_interno.material_codigo_modelo, material.campos);
+            if (material_codigo_modelo && (material_codigo_modelo.valor && material_codigo_modelo.valor !== '')) {
+                if (!existeEnLista(material_codigo_modelos, material_codigo_modelo.valor)) {
+                    material_codigo_modelos.push(material_codigo_modelo.valor);
+                }
             }
-        }
-    });
+        });
 
-    let modelosEnSAP = [];
-    if (material_codigo_modelos) {
-        modelosEnSAP = await cpsaaApiProvider.consultarCodigoMateriales(material_codigo_modelos);
+        if (material_codigo_modelos) {
+            modelosEnSAP = await cpsaaApiProvider.consultarCodigoMateriales(material_codigo_modelos);
+        }
     }
     //#endregion
 
@@ -1976,9 +2078,9 @@ async function validarMateriales(id_solicitud, materiales, tipo_carga) {
         }
 
         // [113] ampliacion
-        // if (existeRegla(enums.codigo_interno.ampliacion, reglas) && existeCampo(enums.codigo_interno.ampliacion, material.campos)) {
-        //     materialResult = await materialValidator.validar_ampliacion(material, materialResult);
-        // }
+        if (esAmpliacion) {
+            materialResult.campos.push({ codigo_interno: enums.codigo_interno.ampliacion, valor: 'X', error: false });
+        }
 
         // [114] precio_base
         if (existeRegla(enums.codigo_interno.precio_base, reglas) && existeCampo(enums.codigo_interno.precio_base, material.campos)) {
@@ -2009,13 +2111,9 @@ async function validarMateriales(id_solicitud, materiales, tipo_carga) {
         result.push(materialResult);
     });
 
-    // if (actualizaciones.length > 0) {
-    //     actualizaciones.forEach(element => {
-    //         result.push(element);
-    //     });
-    // }
-
-    result = await materialValidator.validar_ampliacion(id_solicitud, result, tipo_carga);
+    if (!esAmpliacion) {
+        result = await materialValidator.validar_ampliacion(id_solicitud, result, tipo_carga);
+    }
 
     return result;
 };
@@ -2309,6 +2407,7 @@ function obtenerCamposVisibles(rep, m, campos, list_clasificacion, list_clase_in
     rep["acciones"] = constantes.emptyString;
     rep["mensaje_error_sap"] = m.mensaje_error_sap;
     rep["existe_error_sap"] = m.existe_error_sap;
+    rep["material_codigo_modelo"] = m.material_codigo_modelo;
 
     return rep
 };
@@ -2404,6 +2503,25 @@ function existeEnLista(list, valor) {
     });
 
     return false;
+};
+
+function obtenerCampoValor(codigo_interno, campos) {
+    let result = null;
+
+    for (let index = 0; index < campos.length; index++) {
+        const campo = campos[index];
+
+        if (campo.codigo_interno === codigo_interno) {
+            if (campo.codigo_interno === enums.codigo_interno.area_planificacion_tab) {
+                result = campo.valores[0].valor;
+                break;
+            }
+            result = campo.valor;
+            break;
+        }
+    }
+
+    return result;
 };
 //#endregion
 

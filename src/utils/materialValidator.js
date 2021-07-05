@@ -172,23 +172,40 @@ validator.validar_denominacion = async (material, result, length, length_borrado
                         console.log('update: cambio denominacion');
                         campo.error = false;
                         const denominacionEnDb = await materialSolicitudService.listarPorDenominacion(postgresConn, campo.valor);
-                        if (denominacionEnDb && denominacionEnDb.length > 0) { campo.error = true; }
-                        else { campo.error = await existeDenominacionEnSAP(denominacionesEnSAP, campo.valor) }
+                        if (denominacionEnDb && denominacionEnDb.length > 0) {
+                            campo.error = true;
+                            campo.existeEnDb = true;
+                        }
+                        else {
+                            var existeEnSap = await existeDenominacionEnSAP(denominacionesEnSAP, campo.valor);
+                            campo.error = existeEnSap;
+                            campo.existeEnSap = existeEnSap;
+                        }
                     } else {
                         console.log('update: no cambio denominacion');
                         campo.error = false;
 
                         if (tipo_carga === enums.tipoCarga.individual) {
                             const denominacionEnDb = await materialSolicitudService.listarPorDenominacion(postgresConn, campo.valor);
-                            if (denominacionEnDb && denominacionEnDb.length > 1) { campo.error = true; }
+                            if (denominacionEnDb && denominacionEnDb.length > 1) {
+                                campo.error = true;
+                                campo.existeEnDb = true;
+                            }
                         }
                     }
                 } else {
                     console.log('insert');
                     campo.error = false;
                     const denominacionEnDb = await materialSolicitudService.listarPorDenominacion(postgresConn, campo.valor);
-                    if (denominacionEnDb && denominacionEnDb.length > 0) { campo.error = true; }
-                    else { campo.error = await existeDenominacionEnSAP(denominacionesEnSAP, campo.valor) }
+                    if (denominacionEnDb && denominacionEnDb.length > 0) {
+                        campo.error = true;
+                        campo.existeEnDb = true;
+                    }
+                    else {
+                        var existeEnSap = await existeDenominacionEnSAP(denominacionesEnSAP, campo.valor);
+                        campo.error = existeEnSap;
+                        campo.existeEnSap = existeEnSap;
+                    }
                 }
             }
         }
@@ -198,41 +215,6 @@ validator.validar_denominacion = async (material, result, length, length_borrado
     }
 
     return result;
-};
-
-validator.validar_denominacion_old = async (material, result, tipoCarga, tipoOperacion, id_solicitud, obj_material, request, denominacionesEnSAP) => {
-    const groupResult = { actualizaciones: [] };
-    const campo = obtenerCampo(enums.codigo_interno.denominacion, material.campos);
-
-    if (campo) {
-        console.log('validar_denominacion');
-
-        if (tipoCarga === enums.tipoCarga.individual) {
-            if (tipoOperacion === enums.tipoOperacion.insertar) {
-                var validator = await validar_denominacion_individual_insertar(campo, material, id_solicitud, denominacionesEnSAP);
-            }
-            else if (tipoOperacion === enums.tipoOperacion.actualizar) {
-                var validator = await validar_denominacion_individual_actualizar(campo, material, id_solicitud, obj_material, denominacionesEnSAP);
-            }
-        } else if (tipoCarga === enums.tipoCarga.masivo) {
-            if (tipoOperacion === enums.tipoOperacion.insertar) {
-                var validator = await validar_denominacion_masivo_insertar(campo, material, id_solicitud, request, denominacionesEnSAP);
-            }
-            else if (tipoOperacion === enums.tipoOperacion.actualizar) {
-                var validator = await validar_denominacion_masivo_actualizar(campo, material, id_solicitud, request, obj_material, denominacionesEnSAP);
-            }
-        }
-
-        result.campos = removerCampo(enums.codigo_interno.denominacion, result.campos);
-        result.campos.push(validator.campo);
-
-        if (validator && validator.actualizaciones.length > 0) {
-            groupResult.actualizaciones = validator.actualizaciones;
-        }
-    }
-
-    groupResult.result = result;
-    return groupResult;
 };
 
 validator.validar_ampliacion = async (id_solicitud, result, tipo_carga) => {
@@ -247,9 +229,9 @@ validator.validar_ampliacion = async (id_solicitud, result, tipo_carga) => {
     for (let index = 0; index < result.length; index++) {
         const material = result[index];
 
-        console.log("Completar datos para: " + material.id_material_solicitud);
-        if (material.id_material_solicitud) {
 
+        if (material.id_material_solicitud) {
+            console.log("Completar datos para: " + material.id_material_solicitud);
             for (let i = 0; i < materialesEnDb.length; i++) {
                 const materialEnDb = materialesEnDb[i];
 
@@ -377,22 +359,22 @@ validator.validar_ampliacion = async (id_solicitud, result, tipo_carga) => {
                         } else {
                             console.log("db: <> clave");
 
-                            if (db.ampliacion !== 'X') {
-                                material.campos = removerCampo(enums.codigo_interno.ampliacion, material.campos);
-                                material.campos.push({ codigo_interno: enums.codigo_interno.ampliacion, valor: 'X', error: false });
+                            // if (db.ampliacion !== 'X') {
+                            //     material.campos = removerCampo(enums.codigo_interno.ampliacion, material.campos);
+                            //     material.campos.push({ codigo_interno: enums.codigo_interno.ampliacion, valor: 'X', error: false });
 
-                                campo_denominacion.error = false;
-                                material.campos = removerCampo(enums.codigo_interno.denominacion, material.campos);
-                                material.campos.push(campo_denominacion);
-                                found = true;
-                                break;
-                            } else {
-                                campo_denominacion.error = true;
-                                material.campos = removerCampo(enums.codigo_interno.denominacion, material.campos);
-                                material.campos.push(campo_denominacion);
-                                found = true;
-                                break;
-                            }
+                            //     campo_denominacion.error = false;
+                            //     material.campos = removerCampo(enums.codigo_interno.denominacion, material.campos);
+                            //     material.campos.push(campo_denominacion);
+                            //     found = true;
+                            //     break;
+                            // } else {
+                            //     campo_denominacion.error = true;
+                            //     material.campos = removerCampo(enums.codigo_interno.denominacion, material.campos);
+                            //     material.campos.push(campo_denominacion);
+                            //     found = true;
+                            //     break;
+                            // }
                         }
                     }
                 }
@@ -436,6 +418,18 @@ validator.validar_ampliacion = async (id_solicitud, result, tipo_carga) => {
         }
 
         if (found) {
+            // Remover campos completados que sean nulos
+            console.log(centro);
+            if (!centro) {
+                console.log('Remover centro_codigo_sap');
+                material.campos = removerCampo(enums.codigo_interno.centro_codigo_sap, material.campos);
+            }
+
+            console.log(almacen);
+            if (!almacen) {
+                console.log('Remover almacen_codigo_sap');
+                material.campos = removerCampo(enums.codigo_interno.almacen_codigo_sap, material.campos);
+            }
             continue;
         }
 
@@ -469,7 +463,7 @@ validator.validar_ampliacion = async (id_solicitud, result, tipo_carga) => {
                                 material.campos = removerCampo(enums.codigo_interno.ampliacion, material.campos);
                                 material.campos.push({ codigo_interno: enums.codigo_interno.ampliacion, valor: 'X', error: false });
 
-                                campo_denominacion.error = false;
+                                campo_denominacion.error = campo_denominacion.existeEnDb;
                                 material.campos = removerCampo(enums.codigo_interno.denominacion, material.campos);
                                 material.campos.push(campo_denominacion);
                             } else {
@@ -490,280 +484,21 @@ validator.validar_ampliacion = async (id_solicitud, result, tipo_carga) => {
                 }
             }
         }
-    }
 
-    return result;
-};
-
-async function validar_ampliacion_individual_insertar(requestValidado, id_solicitud) {
-    // Traer materiales por solicitud
-    const materialesEnDb = [];
-    const materialERequest = {};
-
-    const denominacion = '';
-    const centro_codigo_sap = '';
-    const almacen_codigo_sap = '';
-    const clave_request = centro_codigo_sap + '_' + almacen_codigo_sap;
-    const ampliacion = false;
-
-    // Verificar si es una ampliacion
-    materialesEnDb.forEach(element => {
-        const clave_db = element.centro_codigo_sap + '_' + element.almacen_codigo_sap;
-
-        if (denominacion === element.denominacion && (clave_request === clave_db)) {
-            ampliacion = true;
-            return;
-        }
-    });
-
-    // Definir hijos
-
-};
-
-async function validar_denominacion_individual_insertar(campo, material, id_solicitud, denominacionesEnSAP) {
-    var result = { actualizaciones: [] };
-    campo.error = false;
-
-    if (campo.valor && campo.valor.length > 40) {
-        campo.valor = campo.valor.substring(0, 40);
-        campo.error = true;
-    }
-    else {
-
-        if (condition) {
-
+        // Remover campos completados que sean nulos
+        console.log(centro);
+        if (!centro) {
+            console.log('Remover centro_codigo_sap');
+            material.campos = removerCampo(enums.codigo_interno.centro_codigo_sap, material.campos);
         }
 
-
-
-        const ampliacion = obtenerCampo(enums.codigo_interno.ampliacion, material.campos);
-
-        if (ampliacion && ampliacion.valor === 'X') {
-            const centro_codigo_sap = obtenerCampo(enums.codigo_interno.centro_codigo_sap, material.campos);
-            const almacen_codigo_sap = obtenerCampo(enums.codigo_interno.almacen_codigo_sap, material.campos);
-
-            const posiblesPadres = await materialSolicitudService.listarPosiblesPadres(postgresConn, id_solicitud, campo.valor, centro_codigo_sap, almacen_codigo_sap);
-
-            if (!posiblesPadres || posiblesPadres.length === 0) {
-                campo.error = true;
-            }
-        } else {
-            const denominacionEnDb = await materialSolicitudService.listarPorDenominacion(postgresConn, campo.valor);
-            if (denominacionEnDb && denominacionEnDb.length > 0) { campo.error = true; }
-            else { campo.error = await existeDenominacionEnSAP(denominacionesEnSAP, campo.valor) }
+        console.log(almacen);
+        if (!almacen) {
+            console.log('Remover almacen_codigo_sap');
+            material.campos = removerCampo(enums.codigo_interno.almacen_codigo_sap, material.campos);
         }
     }
 
-    result.campo = campo;
-    return result;
-};
-
-async function validar_denominacion_individual_insertar_old(campo, material, id_solicitud, denominacionesEnSAP) {
-    var result = { actualizaciones: [] };
-    campo.error = false;
-
-    if (campo.valor && campo.valor.length > 40) {
-        campo.valor = campo.valor.substring(0, 40);
-        campo.error = true;
-    }
-    else {
-        const ampliacion = obtenerCampo(enums.codigo_interno.ampliacion, material.campos);
-
-        if (ampliacion && ampliacion.valor === 'X') {
-            const centro_codigo_sap = obtenerCampo(enums.codigo_interno.centro_codigo_sap, material.campos);
-            const almacen_codigo_sap = obtenerCampo(enums.codigo_interno.almacen_codigo_sap, material.campos);
-
-            const posiblesPadres = await materialSolicitudService.listarPosiblesPadres(postgresConn, id_solicitud, campo.valor, centro_codigo_sap, almacen_codigo_sap);
-
-            if (!posiblesPadres || posiblesPadres.length === 0) {
-                campo.error = true;
-            }
-        } else {
-            const denominacionEnDb = await materialSolicitudService.listarPorDenominacion(postgresConn, campo.valor);
-            if (denominacionEnDb && denominacionEnDb.length > 0) { campo.error = true; }
-            else { campo.error = await existeDenominacionEnSAP(denominacionesEnSAP, campo.valor) }
-        }
-    }
-
-    result.campo = campo;
-    return result;
-};
-
-async function validar_denominacion_individual_actualizar(campo, material, id_solicitud, obj_material, denominacionesEnSAP) {
-    var result = { actualizaciones: [] };
-    campo.error = false;
-
-    if (obj_material.denominacion !== campo.valor) {
-        const ampliacion = obtenerCampoWithDefault(enums.codigo_interno.ampliacion, material.campos, obj_material);
-
-        if (campo.valor && campo.valor.length > 40) {
-            campo.valor = campo.valor.substring(0, 40);
-            campo.error = true;
-
-            if (!ampliacion || ampliacion.valor === '') {
-                const hijos = await materialSolicitudService.listarHijos(postgresConn, id_solicitud, obj_material.denominacion, obj_material.centro_codigo_sap, obj_material.almacen_codigo_sap);
-
-                if (hijos && hijos.length > 0) {
-                    hijos.forEach(hijo => {
-                        result.actualizaciones.push({
-                            id_material_solicitud: hijo.id,
-                            campos: [{
-                                codigo_interno: enums.codigo_interno.denominacion,
-                                valor: hijo.denominacion,
-                                error: true
-                            }]
-                        });
-                    });
-                }
-            }
-        }
-        else {
-            if (ampliacion && ampliacion.valor === 'X') {
-                const centro_codigo_sap = obtenerCampoWithDefault(enums.codigo_interno.centro_codigo_sap, material.campos, obj_material);
-                const almacen_codigo_sap = obtenerCampoWithDefault(enums.codigo_interno.almacen_codigo_sap, material.campos, obj_material);
-
-                const posiblesPadres = await materialSolicitudService.listarPosiblesPadres(postgresConn, id_solicitud, campo.valor, centro_codigo_sap, almacen_codigo_sap);
-
-                if (!posiblesPadres || posiblesPadres.length === 0) {
-                    campo.error = true;
-                }
-            } else {
-                const denominacionEnDb = await materialSolicitudService.listarPorDenominacion(postgresConn, campo.valor);
-                if (denominacionEnDb && denominacionEnDb.length > 0) { campo.error = true; }
-                else { campo.error = await existeDenominacionEnSAP(denominacionesEnSAP, campo.valor) }
-
-                const hijos = await materialSolicitudService.listarHijos(postgresConn, id_solicitud, obj_material.denominacion, obj_material.centro_codigo_sap, obj_material.almacen_codigo_sap);
-
-                if (hijos && hijos.length > 0) {
-                    if (hijos && hijos.length > 0) {
-                        hijos.forEach(hijo => {
-                            result.actualizaciones.push({
-                                id_material_solicitud: hijo.id,
-                                campos: [{
-                                    codigo_interno: enums.codigo_interno.denominacion,
-                                    valor: hijo.denominacion,
-                                    error: true
-                                }]
-                            });
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-    result.campo = campo;
-    return result;
-};
-
-async function validar_denominacion_masivo_insertar(campo, material, id_solicitud, request, denominacionesEnSAP) {
-    var result = { actualizaciones: [] };
-    campo.error = false;
-
-    if (campo.valor && campo.valor.length > 40) {
-        campo.valor = campo.valor.substring(0, 40);
-        campo.error = true;
-    }
-    else {
-        const ampliacion = obtenerCampo(enums.codigo_interno.ampliacion, material.campos);
-
-        if (ampliacion && ampliacion.valor === 'X') {
-            const centro_codigo_sap = obtenerCampo(enums.codigo_interno.centro_codigo_sap, material.campos);
-            const almacen_codigo_sap = obtenerCampo(enums.codigo_interno.almacen_codigo_sap, material.campos);
-
-            const padresEnRequest = existePadreEnRequest(request, campo.valor, centro_codigo_sap, almacen_codigo_sap);
-            if (!padresEnRequest) {
-                const posiblesPadres = await materialSolicitudService.listarPosiblesPadres(postgresConn, id_solicitud, campo.valor, centro_codigo_sap, almacen_codigo_sap);
-
-                if (!posiblesPadres || posiblesPadres.length === 0) {
-                    campo.error = true;
-                }
-            }
-
-        } else {
-            if (existeDenominacionEnRequest(request, campo.valor)) {
-                campo.error = true;
-            } else {
-                const denominacionEnDb = await materialSolicitudService.listarPorDenominacion(postgresConn, campo.valor);
-                if (denominacionEnDb && denominacionEnDb.length > 0) { campo.error = true; }
-                else { campo.error = await existeDenominacionEnSAP(denominacionesEnSAP, campo.valor) }
-            }
-        }
-    }
-
-    result.campo = campo;
-    return result;
-};
-
-async function validar_denominacion_masivo_actualizar(campo, material, id_solicitud, request, obj_material, denominacionesEnSAP) {
-    var result = { actualizaciones: [] };
-    campo.error = false;
-
-    if (obj_material.denominacion !== campo.valor) {
-        const ampliacion = obtenerCampoWithDefault(enums.codigo_interno.ampliacion, material.campos, obj_material);
-
-        if (campo.valor && campo.valor.length > 40) {
-            campo.valor = campo.valor.substring(0, 40);
-            campo.error = true;
-
-            if (!ampliacion || ampliacion.valor === '') {
-                const hijos = await materialSolicitudService.listarHijos(postgresConn, id_solicitud, obj_material.denominacion, obj_material.centro_codigo_sap, obj_material.almacen_codigo_sap);
-
-                if (hijos && hijos.length > 0) {
-                    hijos.forEach(hijo => {
-                        result.actualizaciones.push({
-                            id_material_solicitud: hijo.id,
-                            campos: [{
-                                codigo_interno: enums.codigo_interno.denominacion,
-                                valor: hijo.denominacion,
-                                error: true
-                            }]
-                        });
-                    });
-                }
-            }
-        }
-        else {
-            if (ampliacion && ampliacion.valor === 'X') {
-                const centro_codigo_sap = obtenerCampoWithDefault(enums.codigo_interno.centro_codigo_sap, material.campos, obj_material);
-                const almacen_codigo_sap = obtenerCampoWithDefault(enums.codigo_interno.almacen_codigo_sap, material.campos, obj_material);
-
-                const padresEnRequest = existePadreEnRequest(request, campo.valor, centro_codigo_sap, almacen_codigo_sap);
-                if (!padresEnRequest) {
-                    const posiblesPadres = await materialSolicitudService.listarPosiblesPadres(postgresConn, id_solicitud, campo.valor, centro_codigo_sap, almacen_codigo_sap);
-
-                    if (!posiblesPadres || posiblesPadres.length === 0) {
-                        campo.error = true;
-                    }
-                }
-            } else {
-                if (existeDenominacionEnRequest(request, campo.valor)) {
-                    campo.error = true;
-                } else {
-                    const denominacionEnDb = await materialSolicitudService.listarPorDenominacion(postgresConn, campo.valor);
-                    if (denominacionEnDb && denominacionEnDb.length > 0) { campo.error = true; }
-                    else { campo.error = await existeDenominacionEnSAP(denominacionesEnSAP, campo.valor) }
-
-                    const hijos = await materialSolicitudService.listarHijos(postgresConn, id_solicitud, obj_material.denominacion, obj_material.centro_codigo_sap, obj_material.almacen_codigo_sap);
-
-                    if (hijos && hijos.length > 0) {
-                        hijos.forEach(hijo => {
-                            result.actualizaciones.push({
-                                id_material_solicitud: hijo.id,
-                                campos: [{
-                                    codigo_interno: enums.codigo_interno.denominacion,
-                                    valor: hijo.denominacion,
-                                    error: true
-                                }]
-                            });
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-    result.campo = campo;
     return result;
 };
 
@@ -911,30 +646,6 @@ validator.validar_clase_inspeccion_tab = async (codigo_interno, material, result
     return result;
 };
 
-validator.validar_ampliacion_old = async (material, result) => {
-    const campo = obtenerCampo(enums.codigo_interno.ampliacion, material.campos);
-
-    if (campo) {
-        console.log('validar_ampliacion');
-
-        if (campo.valor && campo.valor.length > 5) {
-            campo.valor = campo.valor.substring(0, 20);
-            campo.error = true;
-        } else {
-            if (campo.valor !== emptyString && campo.valor !== 'X') {
-                campo.error = true;
-            } else {
-                campo.error = false;
-            }
-        }
-
-        result.campos = removerCampo(enums.codigo_interno.ampliacion, result.campos);
-        result.campos.push(campo);
-    }
-
-    return result;
-};
-
 validator.validar_material_codigo_modelo = async (codigo_interno, material, result, length, length_borrador = 20, modelosEnSAP, tipo_carga) => {
     const campo = obtenerCampo(codigo_interno, material.campos);
 
@@ -946,7 +657,6 @@ validator.validar_material_codigo_modelo = async (codigo_interno, material, resu
             campo.error = true;
         } else {
             campo.error = false;
-            console.log(tipo_carga);
             console.log(modelosEnSAP);
 
             for (let index = 0; index < modelosEnSAP.length; index++) {
@@ -1008,17 +718,6 @@ function obtenerCampoValor(codigo_interno, campos) {
     return result;
 };
 
-function obtenerCampoWithDefault(codigo_interno, campos, obj_material) {
-    let campo = obtenerCampo(codigo_interno, campos);
-    if (!campo) {
-        if (codigo_interno === enums.codigo_interno.ampliacion) { campo = obj_material.ampliacion }
-        if (codigo_interno === enums.codigo_interno.centro_codigo_sap) { campo = obj_material.centro_codigo_sap }
-        if (codigo_interno === enums.codigo_interno.almacen_codigo_sap) { campo = obj_material.almacen_codigo_sap }
-    }
-
-    return campo;
-};
-
 function removerCampo(codigo_interno, campos) {
     const filtered = campos.filter(function (value, index, arr) {
         return value.codigo_interno !== codigo_interno;
@@ -1041,42 +740,6 @@ async function existeDenominacionEnSAP(denominacionesEnSAP, denominacion) {
     } else {
         flag = true;
     }
-
-    return flag;
-};
-
-function existeDenominacionEnRequest(material_request, denominacion) {
-    let count = 0;
-
-    material_request.forEach(material => {
-        const campo_denominacion = obtenerCampo(enums.codigo_interno.denominacion, material.campos);
-        if (campo_denominacion.valor === denominacion) {
-            const campo_ampliacion = obtenerCampo(enums.codigo_interno.ampliacion, material.campos);
-            if (!campo_ampliacion || campo_ampliacion.valor === '') {
-                count++;
-            }
-        }
-    });
-
-    return count > 1;
-};
-
-function existePadreEnRequest(material_request, denominacion, centro_codigo_sap, almacen_codigo_sap) {
-    let flag = false;
-
-    material_request.forEach(material => {
-        const campo_denominacion = obtenerCampo(enums.codigo_interno.denominacion, material.campos);
-        if (campo_denominacion.valor === denominacion) {
-            const campo_centro = obtenerCampo(enums.codigo_interno.centro_codigo_sap, material.campos);
-            if (campo_centro.valor !== centro_codigo_sap) {
-                const campo_almacen = obtenerCampo(enums.codigo_interno.almacen_codigo_sap, material.campos);
-                if (campo_almacen.valor !== almacen_codigo_sap) {
-                    flag = true;
-                    return;
-                }
-            }
-        }
-    });
 
     return flag;
 };

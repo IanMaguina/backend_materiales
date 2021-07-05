@@ -92,6 +92,20 @@ sapController.respuestaCreacionSolicitud = async (req, res) => {
                 res.status(200).json(response);
                 return;
             }
+
+            var hijos = await materialSolicitudService.listarHijosPorIdMaterial(client, materialSolicitudObj.id);
+
+            if (hijos) {
+                await asyncForEach(hijos, async (element) => {
+                    const obj = new MaterialSolicitud();
+                    obj.id = element.id;
+                    obj.material_codigo_sap = detalle[i].material_codigo_sap;
+                    obj.mensaje_error_sap = detalle[i].mensaje_error;
+                    obj.existe_error_sap = detalle[i].existe_error;
+                    console.log('actualizado hijo...' + obj.id);
+                    var res = await materialSolicitudService.actualizarPorRespuestaSapCreacionSolicitud(client, obj);
+                });
+            }
         }
 
         const listaAprobadoresRes = await aprobadorSolicitudService.listarFlujoPorIdSolicitudOrdenadoPorOrden(client, id_solicitud);
@@ -212,5 +226,11 @@ sapController.respuestaCreacionSolicitud = async (req, res) => {
         winston.error("***** Fin sapController.respuestaCreacionSolicitud *****");
     }
 }
+
+async function asyncForEach(array, callback) {
+    for (let index = 0; index < array.length; index++) {
+        await callback(array[index], index, array);
+    }
+};
 
 module.exports = sapController;

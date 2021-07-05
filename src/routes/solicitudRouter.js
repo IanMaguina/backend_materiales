@@ -95,4 +95,7 @@ router.post('/buscarMisPendientes', solicitudController.buscarMisPendientes);
 router.post('/agregarEquivalenciaMaterialxRol', equivalenciaMaterialController.agregarEquivalenciaMaterialxRol);
 router.post('/obtenerAllEquivalenciaMaterial', equivalenciaMaterialController.obtenerAllEquivalenciaMaterial);
 router.post('/borrarxIdEquivalenciaMaterial', equivalenciaMaterialController.borrarxIdEquivalenciaMaterial);
+
+router.post('/:id_solicitud/materialSolicitud/crearAmpliacion', materialSolicitudController.external.crearAmpliacion);
+
 module.exports = router;

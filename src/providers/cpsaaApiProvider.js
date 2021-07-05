@@ -106,37 +106,38 @@ service.consultarNombreMaterial = async (denominaciones) => {
 
 service.consultarCodigoMaterial = async (material) => {
     console.log('cpsaaApiProvider.consultarCodigoMaterial');
-    console.log(material);
+
+    let req = { consulta: { I_PROCESO: "X", I_ACTIVO: "", I_MASIVO: "", I_SOLIC: "", TI_ENTRADA: [{ "MATNR": material.codigo }] } };
 
     var host = config.cpsaaSapApi.hostConsultaMaterialCodigo;
+
     var request = {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': config.cpsaaSapApi.token
         },
-        body: JSON.stringify({
-            "consulta": {
-                "I_PROCESO": "X",
-                "I_ACTIVO": "",
-                "I_MASIVO": "",
-                "I_SOLIC": "",
-                "TI_ENTRADA": [
-                    {
-                        "MATNR": material.codigo,//"004-00054",
-                        "WERKS": material.centro,//"2004",
-                        "LGORT": material.almacen,//"2047",
-                        "VKORG": material.organizacion_ventas,//"1000",
-                        "VTWEG": material.canal_distribucion,//"10",
-                        "BERID": ""
-                    }
-                ]
-            }
-        }),
+        body: JSON.stringify(req),
         cache: 'no-cache'
     };
 
+    console.log('\n******************************');
+    console.log('SAP [' + material.codigo + '] - Request...');
+    console.log('******************************');
+    console.log(request.body);
+    console.log('******************************');
+
+    console.log('\n******************************');
+    console.log('SAP [' + material.codigo + '] - Enviando...');
+    console.log('******************************');
     const data = await fetchWithRetry(host, request);
+    console.log('******************************');
+
+    console.log('\n******************************');
+    console.log('SAP [' + material.codigo + '] - Response...');
+    console.log('******************************');
+    console.log(JSON.stringify(data));
+    console.log('******************************');
 
     let result = { codigo: 0, mensaje: 'Error obteniendo materiales por código desde SAP', lista: [] };
 
@@ -144,8 +145,6 @@ service.consultarCodigoMaterial = async (material) => {
         result.mensaje = data.mensaje;
         if (data.codigo === 1) {
             if (data.resultado !== '') {
-                console.log(data.resultado.TI_MATNR);
-
                 result.codigo = 1;
                 data.resultado.TI_MATNR.forEach(element => {
                     result.lista.push({ codigo_interno: "ramo", valor: element.MBRSH });
@@ -234,11 +233,32 @@ service.consultarCodigoMaterial = async (material) => {
             }
         }
     }
+
+    // if (data) {
+    //     result.mensaje = data.mensaje;
+    //     if (data.codigo === 1) {
+    //         if (data.resultado !== '') {
+    //             result.codigo = 1;
+    //             data.resultado.TI_MATNR.forEach(element => {
+    //                 const obj = {
+    //                     material_codigo_modelo: element.MATNR,
+    //                     ramo: element.MBRSH,
+    //                     tipo_material: element.MTART,
+    //                     grupo_articulo: element.MATKL,
+    //                     sector: element.SPART
+    //                 };
+
+    //                 result.lista.push(obj);
+    //             });
+    //         }
+    //     }
+    // }
+
     return result;
 };
 
 service.consultarCodigoMateriales = async (codigo_modelos) => {
-    console.log('cpsaaApiProvider.consultarCodigoMaterial');
+    console.log('cpsaaApiProvider.consultarCodigoMateriales');
 
     let req = { consulta: { I_PROCESO: "X", I_ACTIVO: "", I_MASIVO: "", I_SOLIC: "", TI_ENTRADA: [] } };
 
@@ -303,14 +323,38 @@ service.consultarCodigoMateriales = async (codigo_modelos) => {
 
 function obtenerRegistroMaterialRequest(solicitud, list_regla_vista) {
     let req = { registro: { TI_SOLIC: [], TI_BERID: [], TI_CLASS: [], TI_TEXT_COM: [], TI_TEXT_PED: [], TI_UMALT: [], TI_ADJUNT: [] } };
+    let ampliacion = {};
 
     solicitud.Materiales.forEach(element => {
+        var itm_pm = element.id_material_solicitud ? element.id_material_solicitud.toString() : "";
+
+        ampliacion[element.id_material_solicitud] = { id_padre: 0 };
+
+        if (element.ampliacion === 'X') {
+            for (let index = 0; index < solicitud.Materiales.length; index++) {
+                const padre = solicitud.Materiales[index];
+
+                if (padre.nombre_material === element.nombre_material) {
+                    if (!padre.ampliacion || padre.ampliacion !== 'X') {
+                        var keyElement = element.centro_codigo_sap + '-' + element.almacen_codigo_sap;
+                        var keyPadre = padre.centro_codigo_sap + '-' + padre.almacen_codigo_sap;
+
+                        if (keyElement !== keyPadre) {
+                            ampliacion[element.id_material_solicitud].id_padre = padre.id_material_solicitud;
+                            itm_pm = padre.id_material_solicitud ? padre.id_material_solicitud.toString() : "";
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         var ti_solic = {
             SOL_PM: element.id_solicitud ? element.id_solicitud.toString() : "",
             DES_PM: element.nombre_solicitud ? element.nombre_solicitud.toString() : "",
             TIP_PM: "C", // 3	Tipo Solicitud	TIP_PM	“B” (Bloqueo)
             ESC_PM: element.escenario_nivel3 ? element.escenario_nivel3.toString() : "",
-            ITM_PM: element.id_material_solicitud ? element.id_material_solicitud.toString() : "",
+            ITM_PM: itm_pm,
             MATNR: element.material_codigo_sap ? element.material_codigo_sap.toString() : "",
             WERKS: element.centro_codigo_sap ?? "",
             LGORT: element.almacen_codigo_sap ?? "",
@@ -447,7 +491,7 @@ function obtenerRegistroMaterialRequest(solicitud, list_regla_vista) {
             var counter = 1;
             chunks.forEach(texto_comercial => {
                 req.registro.TI_TEXT_COM.push({
-                    ITM_PM: new String(element.id_material_solicitud),
+                    ITM_PM: ampliacion[element.id_material_solicitud].id_padre === 0 ? new String(element.id_material_solicitud) : new String(ampliacion[element.id_material_solicitud].id_padre),
                     VKORG: element.organizacion_ventas ?? "",
                     VTWEG: element.canal_distribucion ?? "",
                     SECUEN: counter.toString(),
@@ -462,7 +506,7 @@ function obtenerRegistroMaterialRequest(solicitud, list_regla_vista) {
             var counter = 1;
             chunks.forEach(texto_compra => {
                 req.registro.TI_TEXT_PED.push({
-                    ITM_PM: new String(element.id_material_solicitud),
+                    ITM_PM: ampliacion[element.id_material_solicitud].id_padre === 0 ? new String(element.id_material_solicitud) : new String(ampliacion[element.id_material_solicitud].id_padre),
                     SECUEN: counter.toString(),
                     TDLINE: new String(texto_compra)
                 });
@@ -473,8 +517,9 @@ function obtenerRegistroMaterialRequest(solicitud, list_regla_vista) {
 
     if (solicitud.AreaPlanificacion) {
         solicitud.AreaPlanificacion.forEach(element => {
+
             req.registro.TI_BERID.push({
-                ITM_PM: new String(element.id_material_solicitud),
+                ITM_PM: ampliacion[element.id_material_solicitud].id_padre === 0 ? new String(element.id_material_solicitud) : new String(ampliacion[element.id_material_solicitud].id_padre),
                 WERKS: element.centro_codigo_sap ?? "",
                 BERID: element.area_planificacion ?? "",
                 DISGR: element.grupo_planif_necesidades ?? "",
@@ -496,24 +541,28 @@ function obtenerRegistroMaterialRequest(solicitud, list_regla_vista) {
                 PERIO: "0",//Periodo Por Estación
                 SIGGR: element.limite_alarma ? element.limite_alarma.toString() : "0.000"
             });
+
         });
     }
 
     if (solicitud.Clasificaciones) {
         solicitud.Clasificaciones.forEach(element => {
+
             req.registro.TI_CLASS.push({
-                ITM_PM: new String(element.id_material_solicitud),
+                ITM_PM: ampliacion[element.id_material_solicitud].id_padre === 0 ? new String(element.id_material_solicitud) : new String(ampliacion[element.id_material_solicitud].id_padre),
                 SECUEN: new String(element.id_clasificacion),
                 KLASSE: new String(element.codigo_sap)
             });
+
         });
     }
-    
+
     if (solicitud.EquivalenciaMaterial) {
         var counter = 1;
         solicitud.EquivalenciaMaterial.forEach(element => {
+
             req.registro.TI_UMALT.push({
-                ITEM: new String(element.id_material_solicitud),
+                ITEM: ampliacion[element.id_material_solicitud].id_padre === 0 ? new String(element.id_material_solicitud) : new String(ampliacion[element.id_material_solicitud].id_padre),
                 SECUEN: new String(counter),
                 UMREN: new String(element.valor1),
                 MEINH: new String(element.unidad_medida1),
@@ -527,13 +576,15 @@ function obtenerRegistroMaterialRequest(solicitud, list_regla_vista) {
     if (solicitud.Anexos) {
         var counter = 1;
         solicitud.Anexos.forEach(element => {
+
             req.registro.TI_ADJUNT.push({
-                ITEM: new String(element.id_material_solicitud),
+                ITEM: ampliacion[element.id_material_solicitud].id_padre === 0 ? new String(element.id_material_solicitud) : new String(ampliacion[element.id_material_solicitud].id_padre),
                 SECUEN: new String(counter),
                 NML_PM: new String(element.nombre),
                 LNK_PM: new String(element.ruta_anexo)
             });
             counter++;
+
         });
     }
 

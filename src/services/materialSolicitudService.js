@@ -53,7 +53,7 @@ service.listarPorSolicitudParaSAP = async (conn, id_solicitud) => {
             ms.limite_exceso_sum_ilimitado, ms.modelo_pronostico, ms.periodo_pasado, ms.periodo_pronostico, ms.limite_alarma, \
             ms.anular_automaticamente, ms.optimizacion_parametro, ms.estructura_cuantica, ms.origen_material, ms.tamano_lote, \
             am.nombre \"nombre_anexo\", am.ruta_anexo, ms.texto_compra, ms.texto_comercial, umc.codigo_sap \"unidad_medida_pedido\", \
-            ms.inicializacion, ms.grado_optimizacion, ms.ind_ped_automa, ms.exceso_sum_ilimitado, ms.ump_var, ms.proc_sel_modelo \
+            ms.inicializacion, ms.grado_optimizacion, ms.ind_ped_automa, ms.exceso_sum_ilimitado, ms.ump_var, ms.proc_sel_modelo, ms.ampliacion \
             FROM dino.tsolicitud s \
             INNER JOIN dino.tescenario_nivel3 en3 ON en3.id = s.id_escenario_nivel3 \
             INNER JOIN dino.tmaterial_solicitud ms ON ms.id_solicitud = s.id \
@@ -81,12 +81,33 @@ service.listarPorSolicitudParaSAP = async (conn, id_solicitud) => {
 service.listarPorDenominacion = async (conn, denominacion) => {
     try {
         const queryResponse = await conn.query(
-            'SELECT ms.id "id_material_solicitud", denominacion,ms.centro_codigo_sap, ms.almacen_codigo_sap \
+            'SELECT ms.id "id_material_solicitud", denominacion, ms.centro_codigo_sap, ms.almacen_codigo_sap, ms.ampliacion \
             FROM dino.tsolicitud s \
             INNER JOIN dino.tmaterial_solicitud ms ON ms.id_solicitud = s.id \
             WHERE UPPER(ms.denominacion) = upper($1)',
             [denominacion]);
 
+        return queryResponse.rows;
+    } catch (error) {
+        error.stack = "\nError en materialSolicitudService.listarPorDenominacion. Details: " + error.stack;
+        throw error;
+    }
+};
+
+service.listarPorDenominacionParaAmpliacion = async (conn, denominacion) => {
+    try {
+        const queryResponse = await conn.query(
+            'SELECT ms.id "id_material_solicitud", \
+            COALESCE(ms.denominacion, mb.denominacion) "denominacion", \
+            COALESCE(ms.centro_codigo_sap, mb.centro_codigo_sap) "centro_codigo_sap", \
+            COALESCE(ms.almacen_codigo_sap, mb.almacen_codigo_sap) "almacen_codigo_sap", \
+            ms.ampliacion \
+            FROM dino.tsolicitud s \
+            INNER JOIN dino.tmaterial_solicitud ms ON ms.id_solicitud = s.id \
+            INNER JOIN dino.tmaterial_solicitud_borrador mb ON mb.id_material_solicitud = ms.id \
+            WHERE UPPER(COALESCE(ms.denominacion, mb.denominacion)) = upper($1) AND ms.Ampliacion = \'X\'',
+            [denominacion]);
+console.log(queryResponse.rows);
         return queryResponse.rows;
     } catch (error) {
         error.stack = "\nError en materialSolicitudService.listarPorDenominacion. Details: " + error.stack;
@@ -150,6 +171,24 @@ service.listarHijosParaEliminar = async (conn, id_solicitud, denominacion, centr
     }
 };
 
+service.listarHijosPorIdMaterial = async (conn, id_material_solicitud) => {
+    try {
+        const queryResponse = await conn.query(
+            "SELECT msh.id \
+            FROM dino.tmaterial_solicitud msp \
+            INNER JOIN dino.tmaterial_solicitud msh ON msh.id_solicitud = msp.id_solicitud \
+            AND msh.denominacion = msp.denominacion \
+            AND CONCAT(msh.centro_codigo_sap, msh.almacen_codigo_sap) <> CONCAT(msp.centro_codigo_sap, msp.almacen_codigo_sap) \
+            AND msh.ampliacion = 'X' \
+            WHERE msp.id = $1",
+            [id_material_solicitud]);
+        return queryResponse.rows;
+    } catch (error) {
+        error.stack = "\nError en materialSolicitudService.listarHijosPorIdMaterial. Details: " + error.stack;
+        throw error;
+    }
+};
+
 service.esPadre = async (conn, id_solicitud, denominacion) => {
     try {
         const queryResponse = await conn.query(
@@ -183,7 +222,24 @@ service.crear = async (conn, id_solicitud, material) => {
 
         return result.rows;
     } catch (error) {
-        error.stack = "\nError en materialSolicitudService.agregar. Detail: " + error.stack;
+        error.stack = "\nError en materialSolicitudService.crear. Detail: " + error.stack;
+        throw error;
+    }
+};
+
+service.crearAmpliacion = async (conn, material) => {
+    try {
+       
+        const result = await conn.query(
+            'INSERT INTO dino.tmaterial_solicitud (material_codigo_modelo, material_codigo_sap, ampliacion, peso_bruto, id_solicitud, id_unidad_medida_base, denominacion, id_grupo_tipo_posicion, id_verificacion_disponibilidad, id_grupo_transporte, id_grupo_carga, id_unidad_medida_peso, sector, formula_concreto, codigo_ean, tipo_ean, clasificacion_fiscal, id_unidad_medida_venta, stock_negativo, id_unidad_medida_pedido, precio_estandar, precio_variable, id_unidad_medida_almacen, id_tipo_mrp_caract_plani, id_calculo_tamano_lote, id_clase_aprovis, co_producto, tiempo_fab_propia_pn2, plaza_entrega_prev, stock_seguridad_pn2, stock_seguridad_min_pn2, nivel_servicio_pn2, id_indicador_periodo, id_grupo_estrategia, id_planf_neces_mixtas, id_individual_colectivo, rechazo_componente, sujeto_lote, id_unidad_medida_fabricacion, periodo_pasado, periodo_pronostico, id_inicializacion, limite_alarma, anular_automaticamente, optimizacion_parametro, estructura_cuantica, origen_material, tamano_lote, criticos, estrategicos, almacen_codigo_sap, centro_codigo_sap, centro_beneficio_codigo_sap, grupo_planif_necesidades, alm_aprov_ext_pn2_almacen, alm_aprov_ext_pn2_centro, almacen_produccion, almacen_produccion_centro, planif_necesidades, aprovis_especial, clave_horizonte, categoria_valoracion, grupo_imputacion_material, jerarquia_producto, grupo_tipo_posicion, tipo_mrp_caract_plani, calculo_tamano_lote, clase_aprovis, indicador_periodo, grupo_estrategia, planf_neces_mixtas, individual_colectivo, dcto_pronto_pago, ramo, ump_var, verificacion_disponibilidad, grupo_transporte, grupo_carga, idioma, grupo_tipo_posicion_gral, control_precio, modelo_pronostico, grupo_compra, determinacion_precio, grupo_estadistica_mat, grupo_material1, grupo_material2, partida_arancelaria, ubicacion, toma_retrograda, grupo_articulo, texto_comercial, texto_compra, mensaje_error_sap, canal_distribucion, cantidad_base, limite_exceso_sum_ilimitado, tipo_material, inicializacion, grado_optimizacion, proc_sel_modelo, id_responsable_control_produccion, id_perfil_control_fabricacion, organizacion_ventas, precio_base, moneda, ind_ped_automa, exceso_sum_ilimitado, existe_error_sap) \
+            SELECT material_codigo_modelo, material_codigo_sap, $4, peso_bruto, id_solicitud, id_unidad_medida_base, denominacion, id_grupo_tipo_posicion, id_verificacion_disponibilidad, id_grupo_transporte, id_grupo_carga, id_unidad_medida_peso, sector, formula_concreto, codigo_ean, tipo_ean, clasificacion_fiscal, id_unidad_medida_venta, stock_negativo, id_unidad_medida_pedido, precio_estandar, precio_variable, id_unidad_medida_almacen, id_tipo_mrp_caract_plani, id_calculo_tamano_lote, id_clase_aprovis, co_producto, tiempo_fab_propia_pn2, plaza_entrega_prev, stock_seguridad_pn2, stock_seguridad_min_pn2, nivel_servicio_pn2, id_indicador_periodo, id_grupo_estrategia, id_planf_neces_mixtas, id_individual_colectivo, rechazo_componente, sujeto_lote, id_unidad_medida_fabricacion, periodo_pasado, periodo_pronostico, id_inicializacion, limite_alarma, anular_automaticamente, optimizacion_parametro, estructura_cuantica, origen_material, tamano_lote, criticos, estrategicos, $3, $2, centro_beneficio_codigo_sap, grupo_planif_necesidades, alm_aprov_ext_pn2_almacen, alm_aprov_ext_pn2_centro, almacen_produccion, almacen_produccion_centro, planif_necesidades, aprovis_especial, clave_horizonte, categoria_valoracion, grupo_imputacion_material, jerarquia_producto, grupo_tipo_posicion, tipo_mrp_caract_plani, calculo_tamano_lote, clase_aprovis, indicador_periodo, grupo_estrategia, planf_neces_mixtas, individual_colectivo, dcto_pronto_pago, ramo, ump_var, verificacion_disponibilidad, grupo_transporte, grupo_carga, idioma, grupo_tipo_posicion_gral, control_precio, modelo_pronostico, grupo_compra, determinacion_precio, grupo_estadistica_mat, grupo_material1, grupo_material2, partida_arancelaria, ubicacion, toma_retrograda, grupo_articulo, texto_comercial, texto_compra, mensaje_error_sap, canal_distribucion, cantidad_base, limite_exceso_sum_ilimitado, tipo_material, inicializacion, grado_optimizacion, proc_sel_modelo, id_responsable_control_produccion, id_perfil_control_fabricacion, organizacion_ventas, precio_base, moneda, ind_ped_automa, exceso_sum_ilimitado, existe_error_sap \
+	        FROM dino.tmaterial_solicitud WHERE id = $1 \
+            RETURNING id',
+            [material.id, material.centro_codigo_sap, material.almacen_codigo_sap, "X"]);
+
+        return result.rows;
+    } catch (error) {
+        error.stack = "\nError en materialSolicitudService.crearAmpliacion. Detail: " + error.stack;
         throw error;
     }
 };
@@ -209,6 +265,22 @@ service.crearBorrador = async (conn, id_solicitud, id_material_solicitud, materi
         return result.rows;
     } catch (error) {
         error.stack = "\nError en materialSolicitudService.agregarBorrador. Detail: " + error.stack;
+        throw error;
+    }
+};
+
+service.crearBorradorAmpliacion = async (conn, material, id_material_solicitud) => {
+    try {
+        const result = await conn.query(
+            'INSERT INTO dino.tmaterial_solicitud_borrador (id_material_solicitud, id_solicitud, material_codigo_modelo, material_codigo_modelo_error, material_codigo_sap, material_codigo_sap_error, ampliacion, ampliacion_error, peso_bruto, peso_bruto_error, unidad_medida_base, unidad_medida_base_error, denominacion, denominacion_error, tipo_material, tipo_material_error, ramo, ramo_error, grupo_articulo, grupo_articulo_error, partida_arancelaria, partida_arancelaria_error, organizacion_ventas, organizacion_ventas_error, canal_distribucion, canal_distribucion_error, grupo_tipo_posicion, grupo_tipo_posicion_error, grupo_material1, grupo_material1_error, grupo_material2, grupo_material2_error, verificacion_disponibilidad, verificacion_disponibilidad_error, grupo_transporte, grupo_transporte_error, grupo_carga, grupo_carga_error, unidad_medida_peso, unidad_medida_peso_error, sector, sector_error, grupo_tipo_posicion_gral, grupo_tipo_posicion_gral_error, formula_concreto, formula_concreto_error, codigo_ean, codigo_ean_error, tipo_ean, tipo_ean_error, clasificacion_fiscal, clasificacion_fiscal_error, unidad_medida_venta, unidad_medida_venta_error, grupo_estadistica_mat, grupo_estadistica_mat_error, stock_negativo, stock_negativo_error, grupo_compra, grupo_compra_error, unidad_medida_pedido, unidad_medida_pedido_error, precio_variable, precio_variable_error, control_precio, control_precio_error, determinacion_precio, determinacion_precio_error, unidad_medida_almacen, unidad_medida_almacen_error, tipo_mrp_caract_plani, tipo_mrp_caract_plani_error, calculo_tamano_lote, calculo_tamano_lote_error, clase_aprovis, clase_aprovis_error, toma_retrograda, toma_retrograda_error, co_producto, co_producto_error, tiempo_fab_propia_pn2, tiempo_fab_propia_pn2_error, plaza_entrega_prev, plaza_entrega_prev_error, stock_seguridad_pn2, stock_seguridad_pn2_error, stock_seguridad_min_pn2, stock_seguridad_min_pn2_error, nivel_servicio_pn2, nivel_servicio_pn2_error, indicador_periodo, indicador_periodo_error, grupo_estrategia, grupo_estrategia_error, planf_neces_mixtas, planf_neces_mixtas_error, individual_colectivo, individual_colectivo_error, rechazo_componente, rechazo_componente_error, sujeto_lote, sujeto_lote_error, unidad_medida_fabricacion, unidad_medida_fabricacion_error, limite_exceso_sum_ilimitado_error, modelo_pronostico, modelo_pronostico_error, periodo_pasado, periodo_pasado_error, periodo_pronostico, periodo_pronostico_error, inicializacion, inicializacion_error, limite_alarma, limite_alarma_error, grado_optimizacion, grado_optimizacion_error, proc_sel_modelo, proc_sel_modelo_error, anular_automaticamente, anular_automaticamente_error, optimizacion_parametro, optimizacion_parametro_error, estructura_cuantica, estructura_cuantica_error, origen_material, origen_material_error, tamano_lote, tamano_lote_error, criticos, criticos_error, estrategicos, estrategicos_error, almacen_codigo_sap, almacen_codigo_sap_error, centro_codigo_sap_error, centro_beneficio_codigo_sap, centro_beneficio_codigo_sap_error, grupo_planif_necesidades, grupo_planif_necesidades_error, alm_aprov_ext_pn2_almacen, alm_aprov_ext_pn2_almacen_error, alm_aprov_ext_pn2_centro, alm_aprov_ext_pn2_centro_error, almacen_produccion, almacen_produccion_error, almacen_produccion_centro, almacen_produccion_centro_error, planif_necesidades, planif_necesidades_error, aprovis_especial, aprovis_especial_error, clave_horizonte, clave_horizonte_error, responsable_control_produccion, responsable_control_produccion_error, perfil_control_fabricacion, perfil_control_fabricacion_error, categoria_valoracion, categoria_valoracion_error, grupo_imputacion_material, grupo_imputacion_material_error, jerarquia_producto, jerarquia_producto_error, centro_codigo_sap, limite_exceso_sum_ilimitado, dcto_pronto_pago, dcto_pronto_pago_error, ump_var, ump_var_error, idioma, idioma_error, precio_estandar, precio_estandar_error, ubicacion, ubicacion_error, texto_comercial, texto_comercial_error, texto_compra, texto_compra_error, cantidad_base, cantidad_base_error, precio_base, precio_base_error, moneda, moneda_error, ind_ped_automa, ind_ped_automa_error, exceso_sum_ilimitado, exceso_sum_ilimitado_error) \
+            SELECT $1, id_solicitud, material_codigo_modelo, material_codigo_modelo_error, material_codigo_sap, material_codigo_sap_error, $5, false, peso_bruto, peso_bruto_error, unidad_medida_base, unidad_medida_base_error, denominacion, denominacion_error, tipo_material, tipo_material_error, ramo, ramo_error, grupo_articulo, grupo_articulo_error, partida_arancelaria, partida_arancelaria_error, organizacion_ventas, organizacion_ventas_error, canal_distribucion, canal_distribucion_error, grupo_tipo_posicion, grupo_tipo_posicion_error, grupo_material1, grupo_material1_error, grupo_material2, grupo_material2_error, verificacion_disponibilidad, verificacion_disponibilidad_error, grupo_transporte, grupo_transporte_error, grupo_carga, grupo_carga_error, unidad_medida_peso, unidad_medida_peso_error, sector, sector_error, grupo_tipo_posicion_gral, grupo_tipo_posicion_gral_error, formula_concreto, formula_concreto_error, codigo_ean, codigo_ean_error, tipo_ean, tipo_ean_error, clasificacion_fiscal, clasificacion_fiscal_error, unidad_medida_venta, unidad_medida_venta_error, grupo_estadistica_mat, grupo_estadistica_mat_error, stock_negativo, stock_negativo_error, grupo_compra, grupo_compra_error, unidad_medida_pedido, unidad_medida_pedido_error, precio_variable, precio_variable_error, control_precio, control_precio_error, determinacion_precio, determinacion_precio_error, unidad_medida_almacen, unidad_medida_almacen_error, tipo_mrp_caract_plani, tipo_mrp_caract_plani_error, calculo_tamano_lote, calculo_tamano_lote_error, clase_aprovis, clase_aprovis_error, toma_retrograda, toma_retrograda_error, co_producto, co_producto_error, tiempo_fab_propia_pn2, tiempo_fab_propia_pn2_error, plaza_entrega_prev, plaza_entrega_prev_error, stock_seguridad_pn2, stock_seguridad_pn2_error, stock_seguridad_min_pn2, stock_seguridad_min_pn2_error, nivel_servicio_pn2, nivel_servicio_pn2_error, indicador_periodo, indicador_periodo_error, grupo_estrategia, grupo_estrategia_error, planf_neces_mixtas, planf_neces_mixtas_error, individual_colectivo, individual_colectivo_error, rechazo_componente, rechazo_componente_error, sujeto_lote, sujeto_lote_error, unidad_medida_fabricacion, unidad_medida_fabricacion_error, limite_exceso_sum_ilimitado_error, modelo_pronostico, modelo_pronostico_error, periodo_pasado, periodo_pasado_error, periodo_pronostico, periodo_pronostico_error, inicializacion, inicializacion_error, limite_alarma, limite_alarma_error, grado_optimizacion, grado_optimizacion_error, proc_sel_modelo, proc_sel_modelo_error, anular_automaticamente, anular_automaticamente_error, optimizacion_parametro, optimizacion_parametro_error, estructura_cuantica, estructura_cuantica_error, origen_material, origen_material_error, tamano_lote, tamano_lote_error, criticos, criticos_error, estrategicos, estrategicos_error, $4, false, false, centro_beneficio_codigo_sap, centro_beneficio_codigo_sap_error, grupo_planif_necesidades, grupo_planif_necesidades_error, alm_aprov_ext_pn2_almacen, alm_aprov_ext_pn2_almacen_error, alm_aprov_ext_pn2_centro, alm_aprov_ext_pn2_centro_error, almacen_produccion, almacen_produccion_error, almacen_produccion_centro, almacen_produccion_centro_error, planif_necesidades, planif_necesidades_error, aprovis_especial, aprovis_especial_error, clave_horizonte, clave_horizonte_error, responsable_control_produccion, responsable_control_produccion_error, perfil_control_fabricacion, perfil_control_fabricacion_error, categoria_valoracion, categoria_valoracion_error, grupo_imputacion_material, grupo_imputacion_material_error, jerarquia_producto, jerarquia_producto_error, $3, limite_exceso_sum_ilimitado, dcto_pronto_pago, dcto_pronto_pago_error, ump_var, ump_var_error, idioma, idioma_error, precio_estandar, precio_estandar_error, ubicacion, ubicacion_error, texto_comercial, texto_comercial_error, texto_compra, texto_compra_error, cantidad_base, cantidad_base_error, precio_base, precio_base_error, moneda, moneda_error, ind_ped_automa, ind_ped_automa_error, exceso_sum_ilimitado, exceso_sum_ilimitado_error \
+	        FROM dino.tmaterial_solicitud_borrador WHERE id_material_solicitud = $2 \
+            RETURNING id',
+            [id_material_solicitud, material.id, material.centro_codigo_sap, material.almacen_codigo_sap, "X"]);
+
+        return result.rows;
+    } catch (error) {
+        error.stack = "\nError en materialSolicitudService.crearBorradorAmpliacion. Detail: " + error.stack;
         throw error;
     }
 };
@@ -435,7 +507,7 @@ service.listarMaterialesParaValidarAmpliacion = async (conn, id_solicitud) => {
 service.obtenerPorCodigoSap = async (conn, material_codigo_sap) => {
     try {
         const queryResponse = await conn.query(
-            'SELECT m.* \
+            'SELECT m.id, m.centro_codigo_sap, m.almacen_codigo_sap, m.id_solicitud \
             FROM dino.tmaterial_solicitud m \
             WHERE m.material_codigo_sap = $1', [material_codigo_sap]);
 
@@ -1278,7 +1350,7 @@ function obtenerScriptParaActualizar(campos, tipo_tabla) {
             case enums.codigo_interno.material_codigo_sap: //[200]
                 script = script_update_valor_texto(enums.codigo_interno.material_codigo_sap, tipo_tabla, campo, script);
                 break;
-                case enums.codigo_interno.material_codigo_modelo: //
+            case enums.codigo_interno.material_codigo_modelo: //
                 script = script_update_valor_texto(enums.codigo_interno.material_codigo_modelo, tipo_tabla, campo, script);
                 break;
             default:

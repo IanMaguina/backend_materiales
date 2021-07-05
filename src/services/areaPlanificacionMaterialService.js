@@ -40,7 +40,7 @@ service.listarParaEnviarSAP = async (conn, id_solicitud) => {
             "SELECT apm.id_material_solicitud, apm.area_planificacion, ms.centro_codigo_sap, ms.grupo_planif_necesidades, \
             ms.tipo_mrp_caract_plani, ms.planif_necesidades, ms.calculo_tamano_lote, ms.alm_aprov_ext_pn2_almacen, \
             ms.plaza_entrega_prev, ms.nivel_servicio_pn2, ms.stock_seguridad_pn2, ms.modelo_pronostico, ms.periodo_pasado, \
-            ms.periodo_pronostico, ms.limite_alarma \
+            ms.periodo_pronostico, ms.limite_alarma, ms.ampliacion \
             FROM dino.tmaterial_solicitud ms \
             INNER JOIN dino.tarea_planificacion_material_solicitud apm ON apm.id_material_solicitud = ms.id \
             WHERE ms.id_solicitud = $1",
@@ -63,6 +63,25 @@ service.crear = async (conn, id_material_solicitud, area_planificacion, area_pla
         return queryResponse.rows;
     } catch (error) {
         error.stack = "\nError en areaPlanificacionService.crear, " + error.stack;
+        throw error;
+    }
+};
+
+service.crearAmpliacion = async (conn, id, id_material_solicitud) => {
+    try {
+        console.log('areaPlanificacionService.crearAmpliacion');
+        console.log('id: ' + id);
+        console.log('id_material_solicitud: ' + id_material_solicitud);
+
+        const queryResponse = await conn.query(
+            "INSERT INTO dino.tarea_planificacion_material_solicitud (id_material_solicitud, area_planificacion, area_planificacion_borrador, error) \
+            SELECT $2, area_planificacion, area_planificacion_borrador, error \
+            FROM dino.tarea_planificacion_material_solicitud \
+            WHERE id_material_solicitud = $1", [id, id_material_solicitud]);
+
+        return queryResponse.rows;
+    } catch (error) {
+        error.stack = "\nError en areaPlanificacionService.crearAmpliacion, " + error.stack;
         throw error;
     }
 };

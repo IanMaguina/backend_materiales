@@ -20,8 +20,9 @@ service.listarPorMaterial = async (conn, id_material_solicitud) => {
 service.listarPorSolicitud = async (conn, id_solicitud) => {
     try {
         const queryResponse = await conn.query(
-            "SELECT cm.id_material_solicitud, cm.id_clasificacion, cm.clasificacion_borrador, cm.error, c.nombre, c.codigo_sap \
+            "SELECT cm.id_material_solicitud, cm.id_clasificacion, cm.clasificacion_borrador, cm.error, c.nombre, c.codigo_sap, ms.ampliacion \
             FROM dino.tclasificacion_material_solicitud cm \
+            INNER JOIN dino.tmaterial_solicitud ms On ms.id = cm.id_material_solicitud \
             LEFT JOIN dino.tclasificacion c ON c.id_clasificacion = cm.id_clasificacion \
             WHERE id_material_solicitud IN (select id from dino.tmaterial_solicitud where id_solicitud = $1) \
             ORDER BY cm.id_material_solicitud, cm.id_clasificacion",
@@ -44,6 +45,25 @@ service.crear = async (conn, id_material_solicitud, id_clasificacion, clasificac
         return queryResponse.rows;
     } catch (error) {
         error.stack = "\nError en clasificacionMaterialService.crear, " + error.stack;
+        throw error;
+    }
+};
+
+service.crearAmpliacion = async (conn, id, id_material_solicitud) => {
+    try {
+        console.log('clasificacionMaterialService.crearAmpliacion');
+        console.log('id: ' + id);
+        console.log('id_material_solicitud: ' + id_material_solicitud);
+
+        const queryResponse = await conn.query(
+            "INSERT INTO dino.tclasificacion_material_solicitud (id_clasificacion, id_material_solicitud, id_clasificacion_borrador, clasificacion_borrador, error) \
+            SELECT id_clasificacion, $2, id_clasificacion_borrador, clasificacion_borrador, error \
+            FROM dino.tclasificacion_material_solicitud \
+            WHERE id_material_solicitud = $1", [id, id_material_solicitud]);
+
+        return queryResponse.rows;
+    } catch (error) {
+        error.stack = "\nError en clasificacionMaterialService.crearAmpliacion, " + error.stack;
         throw error;
     }
 };

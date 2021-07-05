@@ -62,7 +62,7 @@ const tablas = [
         "rfc_table": "TI_T025",
         "campos_rfc": "BKLAS¬BKBEZ¬KKREF",
         "bd_table": "dino.tcategoria_valoracion",
-        "campos": "(codigo_sap, nombre, tipo_material)",
+        "campos": "(codigo_sap, nombre, referencia_cuenta)",
         "nro_campos": "($1, $2, $3)",
         "name_key": "(codigo_sap)"
     },
@@ -104,7 +104,7 @@ const tablas = [
         "bd_table": "dino.tresponsable_control_produccion",
         "campos": "(centro_codigo_sap, codigo_sap, nombre)",
         "nro_campos": "($1, $2, $3)",
-        "name_key": "(id)"
+        "name_key": "(centro_codigo_sap, codigo_sap)"
     },
     {
         "rfc_table": "TI_TCO43",
@@ -112,7 +112,7 @@ const tablas = [
         "bd_table": "dino.tperfil_control_fabricacion",
         "campos": "(centro_codigo_sap, codigo_sap,nombre)",
         "nro_campos": "($1, $2, $3)",
-        "name_key": "(id)"
+        "name_key": "(centro_codigo_sap, codigo_sap)"
     }
 
 ];
@@ -141,7 +141,7 @@ function insertar_datos(tabla, campos, nro_campos, name_key, datos, client) {
             break;
         case 'dino.tcategoria_valoracion':
             query = 'INSERT INTO ' + tabla + campos + ' VALUES ' + nro_campos + ' ON CONFLICT ' + name_key + " \
-            DO UPDATE SET nombre = EXCLUDED.nombre, tipo_material = EXCLUDED.tipo_material;";
+            DO UPDATE SET nombre = EXCLUDED.nombre, referencia_cuenta = EXCLUDED.referencia_cuenta;";
             break;
         default:
             query = 'INSERT INTO ' + tabla + campos + ' VALUES ' + nro_campos + ' ON CONFLICT ' + name_key + " \
@@ -154,7 +154,7 @@ function insertar_datos(tabla, campos, nro_campos, name_key, datos, client) {
         } else {
             query = 'INSERT INTO ' + tabla + campos + ' VALUES' + nro_campos + ' ON CONFLICT ' + name_key + ' DO NOTHING;';
         }*/
-    winston.error(tabla + " QUERY: *******************" + query + " --- " + JSON.stringify(datos));
+    //winston.error(tabla + " QUERY: *******************" + query + " --- " + JSON.stringify(datos));
     c = 0;
     return new Promise((resolve, reject) => {
         client.query(query, datos, (err, res) => {

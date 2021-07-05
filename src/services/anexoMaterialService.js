@@ -69,8 +69,9 @@ anexoMaterialService.borrarPorIdAnexoMaterial = async (conn, id_anexo_material) 
 anexoMaterialService.listarParaEnviarSAP = async (conn, id_solicitud) => {
     try {
         const queryResponse = await conn.query(
-            "SELECT am.id, am.id_material_solicitud, am.nombre, am.ruta_anexo \
+            "SELECT am.id, am.id_material_solicitud, am.nombre, am.ruta_anexo, ms.ampliacion \
             FROM dino.tanexo_material am \
+            INNER JOIN dino.tmaterial_solicitud ms ON ms.id = am.id_material_solicitud \
             WHERE id_material_solicitud IN (select id from dino.tmaterial_solicitud where id_solicitud = $1) \
             ORDER BY am.id_material_solicitud, am.id",
             [id_solicitud]);

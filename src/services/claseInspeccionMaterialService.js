@@ -48,6 +48,25 @@ service.crear = async (conn, id_material_solicitud, id_clase_inspeccion, clase_i
     }
 };
 
+service.crearAmpliacion = async (conn, id, id_material_solicitud) => {
+    try {
+        console.log('claseInspeccionMaterialService.crearAmpliacion');
+        console.log('id: ' + id);
+        console.log('id_material_solicitud: ' + id_material_solicitud);
+
+        const queryResponse = await conn.query(
+            "INSERT INTO dino.tclase_inspeccion_material_solicitud (id_clase_inspeccion, id_material_solicitud, id_clase_inspeccion_borrador, clase_inspeccion_borrador, error) \
+            SELECT id_clase_inspeccion, $2, id_clase_inspeccion_borrador, clase_inspeccion_borrador, error \
+            FROM dino.tclase_inspeccion_material_solicitud \
+            WHERE id_material_solicitud = $1", [id, id_material_solicitud]);
+
+        return queryResponse.rows;
+    } catch (error) {
+        error.stack = "\nError en claseInspeccionMaterialService.crearAmpliacion, " + error.stack;
+        throw error;
+    }
+};
+
 service.eliminarPorSolicitud = async (conn, id_solicitud) => {
     try {
         const queryResponse = await conn.query(

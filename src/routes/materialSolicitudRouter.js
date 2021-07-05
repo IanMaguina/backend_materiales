@@ -9,6 +9,5 @@ router.get('/consultaNombreMaterialSAP', materialSolicitudController.external.co
 router.post('/consultaCodigoMaterialSAP', materialSolicitudController.external.consultaCodigoMaterialSAP);
 router.get('/existePadreAmpliacion', materialSolicitudController.external.existePadreAmpliacion);
 router.get('/existeHijosAmpliacion', materialSolicitudController.external.existeHijosAmpliacion);
-router.get('/crearAmpliacion', materialSolicitudController.external.crearAmpliacion);
 router.get('/esPadre', materialSolicitudController.external.esPadre);
 module.exports = router;
