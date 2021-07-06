@@ -1,15 +1,15 @@
 runtime: nodejs14
 service: back
 beta_settings:
-  cloud_sql_instances: pe-pacasmayo-portalmat-gcp:us-central1:portalmat-db-dev
+  cloud_sql_instances: pe-pacasmayo-portalmat-gcp-prd:us-central1:portalmat-db-prd
 env_variables:
   NODE_ENV: production
   KEY_SEND_GRID: string
-  SQL_USER: postgres
-  SQL_PASSWORD: oI1szyfnnxm5cC2N
-  SQL_DATABASE: sismat
+  SQL_USER: portalmat_prd
+  SQL_PASSWORD: P@cA$maY0.+22
+  SQL_DATABASE: portalmat-db-prd
   SQL_PORT: 5432
-  INSTANCE_CONNECTION_NAME: pe-pacasmayo-portalmat-gcp:us-central1:portalmat-db-dev
+  INSTANCE_CONNECTION_NAME: pe-pacasmayo-portalmat-gcp-prd:us-central1:portalmat-db-prd
   DB_SOCKET_PATH : /cloudsql
 env: standard
 instance_class: F1
