@@ -1,5 +1,6 @@
 const CAMPO = {
- /*[1]*/ "ramo": { original: "ramo", borrador: "ramo", error: "ramo_error" },
+    "material_codigo_modelo": { original: "material_codigo_modelo", borrador: "material_codigo_modelo", error: "material_codigo_modelo_error" },
+/*[1]*/ "ramo": { original: "ramo", borrador: "ramo", error: "ramo_error" },
 /*[2]*/ "denominacion": { original: "denominacion", borrador: "denominacion", error: "denominacion_error" },
 /*[3]*/ "unidad_medida_base": { original: "id_unidad_medida_base", borrador: "unidad_medida_base", error: "unidad_medida_base_error" },
 /*[4]*/ "peso_bruto": { original: "peso_bruto", borrador: "peso_bruto", error: "peso_bruto_error" },
@@ -88,6 +89,7 @@ const CAMPO = {
 /*[87]*/ "perfil_control_fabricacion": { original: "id_perfil_control_fabricacion", borrador: "perfil_control_fabricacion", error: "perfil_control_fabricacion_error" },
 /*[88]*/ "unidad_medida_fabricacion": { original: "id_unidad_medida_fabricacion", borrador: "unidad_medida_fabricacion", error: "unidad_medida_fabricacion_error" },
 /*[89]*/ "limite_exceso_sum_ilimitado": { original: "limite_exceso_sum_ilimitado", borrador: "limite_exceso_sum_ilimitado", error: "limite_exceso_sum_ilimitado_error" },
+
 /*[91]*/ "modelo_pronostico": { original: "modelo_pronostico", borrador: "modelo_pronostico", error: "modelo_pronostico_error" },
 /*[92]*/ "periodo_pasado": { original: "periodo_pasado", borrador: "periodo_pasado", error: "periodo_pasado_error" },
 /*[93]*/ "periodo_pronostico": { original: "periodo_pronostico", borrador: "periodo_pronostico", error: "periodo_pronostico_error" },
@@ -100,6 +102,7 @@ const CAMPO = {
 /*[100]*/ "estructura_cuantica": { original: "estructura_cuantica", borrador: "estructura_cuantica", error: "estructura_cuantica_error" },
 /*[101]*/ "origen_material": { original: "origen_material", borrador: "origen_material", error: "origen_material_error" },
 /*[102]*/ "tamano_lote": { original: "tamano_lote", borrador: "tamano_lote", error: "tamano_lote_error" },
+
 /*[107]*/ "clase_inspeccion_tab": { original: "id_clase_inspeccion", borrador: "clase_inspeccion_borrador", error: "clase_inspeccion_tab_error" },
 /*[108]*/ "criticos": { original: "criticos", borrador: "criticos", error: "criticos_error" },
 /*[109]*/ "estrategicos": { original: "estrategicos", borrador: "estrategicos", error: "estrategicos_error" },
@@ -111,8 +114,10 @@ const CAMPO = {
 /*[115]*/ "moneda": { original: "moneda", borrador: "moneda", error: "moneda_error" },
 /*[116]*/ "ind_ped_automa": { original: "ind_ped_automa", borrador: "ind_ped_automa", error: "ind_ped_automa_error" },
 /*[117]*/ "exceso_sum_ilimitado": { original: "exceso_sum_ilimitado", borrador: "exceso_sum_ilimitado", error: "exceso_sum_ilimitado_error" },
-/*[200]*/ "material_codigo_sap": { original: "material_codigo_sap", borrador: "material_codigo_sap", error: "material_codigo_sap_error" },
-    "material_codigo_modelo": { original: "material_codigo_modelo", borrador: "material_codigo_modelo", error: "material_codigo_modelo_error" }
+/*[118]*/ "vista_planificacion": { original: "vista_planificacion", borrador: "vista_planificacion", error: "vista_planificacion_error" },
+/*[119]*/ "precio_cotizacion": { original: "precio_cotizacion", borrador: "precio_cotizacion", error: "precio_cotizacion_error" },
+/*[120]*/ "periodo_vida": { original: "periodo_vida", borrador: "periodo_vida", error: "periodo_vida_error" },
+/*[200]*/ "material_codigo_sap": { original: "material_codigo_sap", borrador: "material_codigo_sap", error: "material_codigo_sap_error" }
 };
 
 const ESCENARIO_NIVEL_1 = {
@@ -132,123 +137,125 @@ class TipoTabla {
 class CampoCodigoInternoEnum {
     constructor() {
         this.material_codigo_modelo = 'material_codigo_modelo'
-        this.ramo = "ramo";// 1
-        this.denominacion = "denominacion";// 2
-        this.unidad_medida_base = "unidad_medida_base";// 3
-        this.peso_bruto = "peso_bruto";// 4
-        this.unidad_medida_peso = "unidad_medida_peso";// 5
-        this.partida_arancelaria = "partida_arancelaria";// 6
-        this.centro_codigo_sap = "centro_codigo_sap";// 7
-        this.centro_beneficio_codigo_sap = "centro_beneficio_codigo_sap";// 8
-        this.almacen_codigo_sap = "almacen_codigo_sap";// 9
-        this.organizacion_ventas = "organizacion_ventas";// 10
-        this.canal_distribucion = "canal_distribucion";// 11
-        this.clasificacion_tab = "clasificacion_tab";// 12 
-        this.tipo_material = "tipo_material";// 13
-        this.grupo_articulo = "grupo_articulo";// 14        
-        this.sector = "sector";// 15
-        this.grupo_tipo_posicion_gral = "grupo_tipo_posicion_gral";// 16
-        this.codigo_ean = "codigo_ean";// 17
-        this.tipo_ean = "tipo_ean";// 18
-        this.texto_compra = "texto_compra";// 19
-        this.link_adjunt = "link_adjunt";// 20 - por revisar tabla anexo material
-        this.clasificacion_fiscal = "clasificacion_fiscal";// 21
-        this.unidad_medida_venta = "unidad_medida_venta";// 22
-        this.grupo_estadistica_mat = "grupo_estadistica_mat";// 23
-        this.grupo_tipo_posicion = "grupo_tipo_posicion";// 24
-        this.grupo_imputacion_material = "grupo_imputacion_material";// 25
-        this.jerarquia_producto = "jerarquia_producto";// 26
-        this.grupo_material1 = "grupos_material1";// 27
-        this.grupo_material2 = "grupos_material2";// 28
-        this.texto_comercial = "texto_comercial";// 29
-        this.verificacion_disponibilidad = "verificacion_disponibilidad";// 30
-        this.grupo_transporte = "grupo_transporte";// 31
-        this.grupo_carga = "grupo_carga";// 32
-        this.stock_negativo = "stock_negativo";// 33
-        this.formula_concreto = "formula_concreto";// 34        
-        this.grupo_compra = "grupo_compra";// 35
-        this.unidad_medida_pedido = "unidad_medida_pedido";// 36
-        this.precio_estandar = "precio_estandar";// 37
-        this.precio_variable = "precio_variable";// 38
-        this.categoria_valoracion = "categoria_valoracion";// 39        
-        this.control_precio = "control_precio";// 40
-        this.determinacion_precio = "determinacion_precio";// 41
-        this.unidad_medida_almacen = "unidad_medida_almacen";// 42
-        this.ubicacion = "ubicacion";// 43
-        this.dcto_pronto_pago = "dcto_pronto_pago";// 44           
-        this.grupo_planif_necesidades = "grupo_planif_necesidades";// 45
-        this.tipo_mrp_caract_plani = "tipo_mrp_caract_plani";// 46
-        this.planif_necesidades = "planif_necesidades";// 47
-        this.calculo_tamano_lote = "calculo_tamano_lote";// 48
-        this.area_planificacion_tab = "area_planificacion_tab";// 49
-        this.grupo_planif_necesidades_tab = "grupo_planif_necesidades_tab";// 50
-        this.caracteristica_necesidad_tab = "caracteristica_necesidad_tab";// 51
-        this.punto_pedido_tab = "punto_pedido_tab";// 52
-        this.stock_alm_max_tab = "stock_alm_max_tab";// 53   
-        this.planif_necesidades_tab = "planif_necesidades_tab";// 54
-        this.calculo_tamano_lote_tab = "calculo_tamano_lote_tab";// 55   
-        this.valor_redondeo_tab = "valor_redondeo_tab";// 56
-        this.alm_aprov_ext_tab = "alm_aprov_ext_tab";// 57
-        this.plazo_entrega_prev_tab = "plazo_entrega_prev_tab";// 58 
-        this.nivel_servicio_tab = "nivel_servicio_tab";// 59
-        this.stock_seguridad_tab = "stock_seguridad_tab";// 60
-        this.indicador_margen_seg_tab = "indicador_margen_seg_tab";// 61
-        this.margen_seguridad_tab = "margen_seguridad_tab";// 62
-        this.modelo_pronostico_tab = "modelo_pronostico_tab";// 63
-        this.periodo_pasado_tab = "periodo_pasado_tab";// 64
-        this.periodo_pronostico_tab = "periodo_pronostico_tab";// 65
-        this.periodo_estaci_tab = "periodo_estaci_tab";// 66
-        this.limite_alarma_tab = "limite_alarma_tab";// 67
-        this.clase_aprovis = "clase_aprovis";// 68
-        this.aprovis_especial = "aprovis_especial";// 69
-        this.toma_retrograda = "toma_retrograda";// 70
-        this.almacen_produccion = "almacen_produccion";// 71
-        this.alm_aprov_ext = "alm_aprov_ext";// 72 - por revisar pm2 
-        this.co_producto = "co_producto";// 73
-        this.tiempo_fab_propia_pn2 = "tiempo_fab_propia_pn2";// 74
-        this.plaza_entrega_prev = "plaza_entrega_prev";// 75
-        this.clave_horizonte = "clave_horizonte";// 76
-        this.stock_seguridad_pn2 = "stock_seguridad_pn2";// 77
-        this.stock_seguridad_min_pn2 = "stock_seguridad_min_pn2";// 78
-        this.nivel_servicio_pn2 = "nivel_servicio_pn2";// 79
-        this.indicador_periodo = "indicador_periodo";// 80
-        this.grupo_estrategia = "grupo_estrategia";// 81
-        this.planf_neces_mixtas = "planf_neces_mixtas"; //82
-        this.individual_colectivo = "individual_colectivo";// 83
-        this.rechazo_componente = "rechazo_componente";// 84
-        this.sujeto_lote = "sujeto_lote";// 85
-        this.responsable_control_produccion = "responsable_control_produccion";// 86
-        this.perfil_control_fabricacion = "perfil_control_fabricacion";// 87
-        this.unidad_medida_fabricacion = "unidad_medida_fabricacion";// 88
+        /*[1]*/ this.ramo = "ramo";
+        /*[2]*/ this.denominacion = "denominacion";
+        /*[3]*/ this.unidad_medida_base = "unidad_medida_base";
+        /*[4]*/ this.peso_bruto = "peso_bruto";
+        /*[5]*/ this.unidad_medida_peso = "unidad_medida_peso";
+        /*[6]*/ this.partida_arancelaria = "partida_arancelaria";
+        /*[7]*/ this.centro_codigo_sap = "centro_codigo_sap";
+        /*[8]*/ this.centro_beneficio_codigo_sap = "centro_beneficio_codigo_sap";
+        /*[9]*/ this.almacen_codigo_sap = "almacen_codigo_sap";
+        /*[10]*/ this.organizacion_ventas = "organizacion_ventas";
+        /*[11]*/ this.canal_distribucion = "canal_distribucion";
+        /*[12]*/ this.clasificacion_tab = "clasificacion_tab";
+        /*[13]*/ this.tipo_material = "tipo_material";
+        /*[14]*/ this.grupo_articulo = "grupo_articulo";
+        /*[15]*/ this.sector = "sector";
+        /*[16]*/ this.grupo_tipo_posicion_gral = "grupo_tipo_posicion_gral";
+        /*[17]*/ this.codigo_ean = "codigo_ean";
+        /*[18]*/ this.tipo_ean = "tipo_ean";
+        /*[19]*/ this.texto_compra = "texto_compra";
+        /*[20]*/ this.link_adjunt = "link_adjunt";
+        /*[21]*/ this.clasificacion_fiscal = "clasificacion_fiscal";
+        /*[22]*/ this.unidad_medida_venta = "unidad_medida_venta";
+        /*[23]*/ this.grupo_estadistica_mat = "grupo_estadistica_mat";
+        /*[24]*/ this.grupo_tipo_posicion = "grupo_tipo_posicion";
+        /*[25]*/ this.grupo_imputacion_material = "grupo_imputacion_material";
+        /*[26]*/ this.jerarquia_producto = "jerarquia_producto";
+        /*[27]*/ this.grupo_material1 = "grupos_material1";
+        /*[28]*/ this.grupo_material2 = "grupos_material2";
+        /*[29]*/ this.texto_comercial = "texto_comercial";
+        /*[30]*/ this.verificacion_disponibilidad = "verificacion_disponibilidad";
+        /*[31]*/ this.grupo_transporte = "grupo_transporte";
+        /*[32]*/ this.grupo_carga = "grupo_carga";
+        /*[33]*/ this.stock_negativo = "stock_negativo";
+        /*[34]*/ this.formula_concreto = "formula_concreto";
+        /*[35]*/ this.grupo_compra = "grupo_compra";
+        /*[36]*/ this.unidad_medida_pedido = "unidad_medida_pedido";
+        /*[37]*/ this.precio_estandar = "precio_estandar";
+        /*[38]*/ this.precio_variable = "precio_variable";
+        /*[39]*/ this.categoria_valoracion = "categoria_valoracion";
+        /*[40]*/ this.control_precio = "control_precio";
+        /*[41]*/ this.determinacion_precio = "determinacion_precio";
+        /*[42]*/ this.unidad_medida_almacen = "unidad_medida_almacen";
+        /*[43]*/ this.ubicacion = "ubicacion";
+        /*[44]*/ this.dcto_pronto_pago = "dcto_pronto_pago";
+        /*[45]*/ this.grupo_planif_necesidades = "grupo_planif_necesidades";
+        /*[46]*/ this.tipo_mrp_caract_plani = "tipo_mrp_caract_plani";
+        /*[47]*/ this.planif_necesidades = "planif_necesidades";
+        /*[48]*/ this.calculo_tamano_lote = "calculo_tamano_lote";
+        /*[49]*/ this.area_planificacion_tab = "area_planificacion_tab";
+        /*[50]*/ this.grupo_planif_necesidades_tab = "grupo_planif_necesidades_tab";
+        /*[51]*/ this.caracteristica_necesidad_tab = "caracteristica_necesidad_tab";
+        /*[52]*/ this.punto_pedido_tab = "punto_pedido_tab";
+        /*[53]*/ this.stock_alm_max_tab = "stock_alm_max_tab";
+        /*[54]*/ this.planif_necesidades_tab = "planif_necesidades_tab";
+        /*[55]*/ this.calculo_tamano_lote_tab = "calculo_tamano_lote_tab";
+        /*[56]*/ this.valor_redondeo_tab = "valor_redondeo_tab";
+        /*[57]*/ this.alm_aprov_ext_tab = "alm_aprov_ext_tab";
+        /*[58]*/ this.plazo_entrega_prev_tab = "plazo_entrega_prev_tab";
+        /*[59]*/ this.nivel_servicio_tab = "nivel_servicio_tab";
+        /*[60]*/ this.stock_seguridad_tab = "stock_seguridad_tab";
+        /*[61]*/ this.indicador_margen_seg_tab = "indicador_margen_seg_tab";
+        /*[62]*/ this.margen_seguridad_tab = "margen_seguridad_tab";
+        /*[63]*/ this.modelo_pronostico_tab = "modelo_pronostico_tab";
+        /*[64]*/ this.periodo_pasado_tab = "periodo_pasado_tab";
+        /*[65]*/ this.periodo_pronostico_tab = "periodo_pronostico_tab";
+        /*[66]*/ this.periodo_estaci_tab = "periodo_estaci_tab";
+        /*[67]*/ this.limite_alarma_tab = "limite_alarma_tab";
+        /*[68]*/ this.clase_aprovis = "clase_aprovis";
+        /*[69]*/ this.aprovis_especial = "aprovis_especial";
+        /*[70]*/ this.toma_retrograda = "toma_retrograda";
+        /*[71]*/ this.almacen_produccion = "almacen_produccion";
+        /*[72]*/ this.alm_aprov_ext = "alm_aprov_ext";
+        /*[73]*/ this.co_producto = "co_producto";
+        /*[74]*/ this.tiempo_fab_propia_pn2 = "tiempo_fab_propia_pn2";
+        /*[75]*/ this.plaza_entrega_prev = "plaza_entrega_prev";
+        /*[76]*/ this.clave_horizonte = "clave_horizonte";
+        /*[77]*/ this.stock_seguridad_pn2 = "stock_seguridad_pn2";
+        /*[78]*/ this.stock_seguridad_min_pn2 = "stock_seguridad_min_pn2";
+        /*[79]*/ this.nivel_servicio_pn2 = "nivel_servicio_pn2";
+        /*[80]*/ this.indicador_periodo = "indicador_periodo";
+        /*[81]*/ this.grupo_estrategia = "grupo_estrategia";
+        /*[82]*/ this.planf_neces_mixtas = "planf_neces_mixtas";
+        /*[83]*/ this.individual_colectivo = "individual_colectivo";
+        /*[84]*/ this.rechazo_componente = "rechazo_componente";
+        /*[85]*/ this.sujeto_lote = "sujeto_lote";
+        /*[86]*/ this.responsable_control_produccion = "responsable_control_produccion";
+        /*[87]*/ this.perfil_control_fabricacion = "perfil_control_fabricacion";
+        /*[88]*/ this.unidad_medida_fabricacion = "unidad_medida_fabricacion";
         /*[89]*/ this.limite_exceso_sum_ilimitado = "limite_exceso_sum_ilimitado";
-        /*[90]*/
-        this.modelo_pronostico = "modelo_pronostico";// 91
-        this.periodo_pasado = "periodo_pasado";// 92
-        this.periodo_pronostico = "periodo_pronostico";// 93
-        this.inicializacion = "inicializacion";// 94
-        this.limite_alarma = "limite_alarma";// 95
-        this.grado_optimizacion = "grado_optimizacion";// 96
-        this.proc_sel_modelo = "proc_sel_modelo";// 97
-        this.anular_automaticamente = "anular_automaticamente";// 98
-        this.optimizacion_parametro = "optimizacion_parametro";// 99
-        this.estructura_cuantica = "estructura_cuantica";// 100
-        this.origen_material = "origen_material";// 101
-        this.tamano_lote = "tamano_lote";// 102
-        // no existe campo 103
-        // no existe campo 104
+        
+        /*[91]*/ this.modelo_pronostico = "modelo_pronostico";
+        /*[92]*/ this.periodo_pasado = "periodo_pasado";
+        /*[93]*/ this.periodo_pronostico = "periodo_pronostico";
+        /*[94]*/ this.inicializacion = "inicializacion";
+        /*[95]*/ this.limite_alarma = "limite_alarma";
+        /*[96]*/ this.grado_optimizacion = "grado_optimizacion";
+        /*[97]*/ this.proc_sel_modelo = "proc_sel_modelo";
+        /*[98]*/ this.anular_automaticamente = "anular_automaticamente";
+        /*[99]*/ this.optimizacion_parametro = "optimizacion_parametro";
+        /*[100]*/ this.estructura_cuantica = "estructura_cuantica";
+        /*[101]*/ this.origen_material = "origen_material";
+        /*[102]*/ this.tamano_lote = "tamano_lote";
+        
         // no existe campo 105
         // no existe campo 106
-        this.clase_inspeccion_tab = "clase_inspeccion_tab";// 107
-        this.criticos = "criticos";// 108
-        this.estrategicos = "estrategicos";// 109
-        this.ump_var = "ump_var";// 110 
-        this.cantidad_base = "cantidad_base";// 111
-        this.idioma = "idioma";// 112
-        this.ampliacion = "ampliacion";// 113
+        /*[107]*/ this.clase_inspeccion_tab = "clase_inspeccion_tab";
+        /*[108]*/ this.criticos = "criticos";
+        /*[109]*/ this.estrategicos = "estrategicos";
+        /*[110]*/ this.ump_var = "ump_var";
+        /*[111]*/ this.cantidad_base = "cantidad_base";
+        /*[112]*/ this.idioma = "idioma";
+        /*[113]*/ this.ampliacion = "ampliacion";
         /*[114]*/ this.precio_base = "precio_base";
         /*[115]*/ this.moneda = "moneda";
         /*[116]*/ this.ind_ped_automa = "ind_ped_automa";
         /*[117]*/ this.exceso_sum_ilimitado = "exceso_sum_ilimitado";
+        /*[118]*/ this.vista_planificacion = "vista_planificacion";
+        /*[119]*/ this.precio_cotizacion = "precio_cotizacion";
+        /*[120]*/ this.periodo_vida = "periodo_vida";
         /*[200]*/ this.material_codigo_sap = "material_codigo_sap";
     }
 }
@@ -358,12 +365,14 @@ class ColumnasMaterialSolicitudEnum {
         this.ind_ped_automa = "ind_ped_automa";
         this.exceso_sum_ilimitado = "exceso_sum_ilimitado";
         this.material_codigo_sap = "material_codigo_sap";
-
         this.id_solicitud = "id_solicitud";
         this.material_codigo_modelo = "material_codigo_modelo";
         this.alm_aprov_ext_pn2_almacen = "alm_aprov_ext_pn2_almacen";
         this.alm_aprov_ext_pn2_centro = "alm_aprov_ext_pn2_centro";
         this.almacen_produccion_centro = "almacen_produccion_centro";
+        this.vista_planificacion = "vista_planificacion";
+        this.precio_cotizacion = "precio_cotizacion";
+        this.periodo_vida = "periodo_vida";
     }
 }
 
@@ -466,6 +475,9 @@ class ColumnasMaterialSolicitudBorradorEnum {
         /*[115]*/ this.moneda = "moneda";
         /*[116]*/ this.ind_ped_automa = "ind_ped_automa";
         /*[117]*/ this.exceso_sum_ilimitado = "exceso_sum_ilimitado";
+        this.vista_planificacion = "vista_planificacion";
+        this.precio_cotizacion = "precio_cotizacion";
+        this.periodo_vida = "periodo_vida";
     }
 }
 
@@ -503,6 +515,15 @@ class VistaPortal {
     }
 }
 
+class TipoSolicitud{
+    constructor() {
+        this.creacion = 1;
+        this.ampliacion = 2;
+        this.modificacion = 3;
+        this.bloqueo = 4;
+    }
+}
+
 class Enums {
     constructor() {
         this.campoCodigoInterno = new CampoCodigoInternoEnum();
@@ -516,6 +537,7 @@ class Enums {
         this.columna = CAMPO;
         this.vista_portal = new VistaPortal();
         this.escenarioNivel1 = ESCENARIO_NIVEL_1;
+        this.tipo_solicitud = new TipoSolicitud();
     }
 }
 

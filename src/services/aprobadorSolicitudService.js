@@ -217,6 +217,58 @@ service.actualizarFlujo = async (conn, aprobadorSolicitud) => {
     }
 };
 
+service.actualizar_flujo = async (conn, aprobadorSolicitud) => {
+    try {
+        // para fecha_ingreso
+        let queryFechaIngreso = null;
+        if (aprobadorSolicitud.fecha_ingreso) {
+            queryFechaIngreso = "TO_TIMESTAMP($8, 'YYYY-MM-DD HH24:MI:SS')";
+        } else {
+            queryFechaIngreso = "$8";
+        }
+        
+        // fecha_salida
+        let queryFechaSalida = null;
+        if (aprobadorSolicitud.fecha_salida) {
+            queryFechaSalida = "TO_TIMESTAMP($9, 'YYYY-MM-DD HH24:MI:SS')";
+        } else {
+            queryFechaSalida = "$9";
+        }
+        
+        const queryResponse = await conn.query("UPDATE dino.taprobador_solicitud SET id_estado_real=$1, nombre_estado_real=$2, id_rol_real=$3, nombre_rol_real=$4"
+            + ", id_usuario_real=$5, nombre_usuario_real=$6, correo_usuario_real=$7, fecha_ingreso=" + queryFechaIngreso
+            + ", fecha_salida=" + queryFechaSalida + ", estado_completado=$10, \
+            motivo = $11, \
+            duracion = $12, \
+            esta_aqui = $13 \
+            WHERE id = $14"
+            , [
+                aprobadorSolicitud.id_estado_real, 
+                aprobadorSolicitud.nombre_estado_real, 
+                aprobadorSolicitud.id_rol_real, 
+                aprobadorSolicitud.nombre_rol_real, 
+                aprobadorSolicitud.id_usuario_real, 
+                aprobadorSolicitud.nombre_usuario_real, 
+                aprobadorSolicitud.correo_usuario_real, 
+                aprobadorSolicitud.fecha_ingreso, 
+                aprobadorSolicitud.fecha_salida, 
+                aprobadorSolicitud.estado_completado, 
+                aprobadorSolicitud.motivo, 
+                aprobadorSolicitud.duracion, 
+                aprobadorSolicitud.esta_aqui,
+                aprobadorSolicitud.id]);
+        console.log("queryResponse.rowCount:", queryResponse.rowCount);
+        if (queryResponse && queryResponse.rowCount == 1) {
+            return true;
+        } else {
+            return false;
+        }
+    } catch (error) {
+        error.stack = "\nError en aprobadorSolicitudService.actualizarFlujo, " + error.stack;
+        throw error;
+    }
+};
+
 service.actualizarSeguimiento = async (conn, aprobadorSolicitud) => {
     try {
         // fecha_salida

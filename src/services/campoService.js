@@ -133,4 +133,26 @@ service.listarTodo = async (conn) => {
     }    
 };
 
+service.listarCampoReglasxEscenario3 = async (conn, id_escenario_nivel3, id_rol, id_tipo_solicitud) => {
+    try {
+        const queryResponse = await conn.query(
+            "SELECT cv.id id_campo_vista , cv.nombre nombre_campo, \
+            rcvp.regla_campo, rcvp.orden orden_campo, cv.tipo_objeto, \
+            rcvp.valor_defecto, cv.tabla_maestra, \
+            cv.tipo_dato, cv.longitud, cv.etiqueta , cv.codigo_interno, \
+            REPLACE(SPLIT_PART(CAST (cv.longitud AS text), '.', 2),'0','') longitud_decimal \
+            FROM dino.treglas_campo_vista_portal rcvp \
+            INNER JOIN dino.tcampo_vista cv ON cv.id = rcvp.id_campo_vista \
+            WHERE rcvp.id_escenario_nivel3 = $1 AND rcvp.activo = true \
+            AND rcvp.id_tipo_solicitud = $2 \
+            ORDER BY rcvp.orden", 
+            [id_escenario_nivel3,id_tipo_solicitud]);
+            //ORDER BY rcvp.id_vista_portal, rcvp.orden", 
+        return queryResponse.rows;        
+    } catch (error) {
+        error.stack = "\nError en campoService.listar, " + error.stack;
+        throw error;
+    }    
+};
+
 module.exports = service;

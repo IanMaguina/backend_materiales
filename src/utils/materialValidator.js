@@ -463,7 +463,7 @@ validator.validar_ampliacion = async (id_solicitud, result, tipo_carga) => {
                                 material.campos = removerCampo(enums.codigo_interno.ampliacion, material.campos);
                                 material.campos.push({ codigo_interno: enums.codigo_interno.ampliacion, valor: 'X', error: false });
 
-                                campo_denominacion.error = campo_denominacion.existeEnDb;
+                                campo_denominacion.error = campo_denominacion.existeEnDb ?? false;
                                 material.campos = removerCampo(enums.codigo_interno.denominacion, material.campos);
                                 material.campos.push(campo_denominacion);
                             } else {
@@ -601,6 +601,113 @@ validator.validar_area_planificacion = async (codigo_interno, material, result, 
                     }
                 } else {
                     area_planificacion.error = false;
+                }
+            }
+        });
+
+        result.campos = removerCampo(codigo_interno, result.campos);
+        result.campos.push(campo);
+    }
+
+    return result;
+};
+
+validator.validar_grupo_planif_necesidades = async (codigo_interno, material, result, length, length_borrador = 20, list) => {
+    const campo = obtenerCampo(codigo_interno, material.campos);
+
+    if (campo) {
+        console.log('validar_' + codigo_interno);
+
+        await asyncForEach(campo.valores, async (grupo_planif_necesidades) => {
+            if (grupo_planif_necesidades.valor && grupo_planif_necesidades.valor.length > length) {
+                grupo_planif_necesidades.valor = grupo_planif_necesidades.valor.substring(0, length_borrador);
+                grupo_planif_necesidades.error = true;
+            } else {
+                // if (grupo_planif_necesidades.porDefecto) {
+                //     grupo_planif_necesidades.error = false;
+                // } else {
+                if (list) {
+                    let obj = list.filter(function (item) { return item.codigo_sap == grupo_planif_necesidades.valor })[0] || null;
+
+                    if (obj) {
+                        grupo_planif_necesidades.id = obj.codigo_sap;
+                        grupo_planif_necesidades.error = false;
+                    } else {
+                        grupo_planif_necesidades.id = null;
+                        grupo_planif_necesidades.error = true;
+                    }
+                } else {
+                    grupo_planif_necesidades.error = false;
+                }
+                //}
+            }
+        });
+
+        result.campos = removerCampo(codigo_interno, result.campos);
+        result.campos.push(campo);
+    }
+
+    return result;
+};
+
+validator.validar_modelo_pronostico = async (codigo_interno, material, result, length, length_borrador = 20, list) => {
+    const campo = obtenerCampo(codigo_interno, material.campos);
+
+    if (campo) {
+        console.log('validar_' + codigo_interno);
+
+        await asyncForEach(campo.valores, async (modelo_pronostico) => {
+            if (modelo_pronostico.valor && modelo_pronostico.valor.length > length) {
+                modelo_pronostico.valor = modelo_pronostico.valor.substring(0, length_borrador);
+                modelo_pronostico.error = true;
+            } else {
+                // if (modelo_pronostico.porDefecto) {
+                //     modelo_pronostico.error = false;
+                // } else {
+                if (list) {
+                    let obj = list.filter(function (item) { return item.codigo_sap == modelo_pronostico.valor })[0] || null;
+
+                    if (obj) {
+                        modelo_pronostico.id = obj.id_modelo_pronostico;
+                        modelo_pronostico.error = false;
+                    } else {
+                        modelo_pronostico.id = null;
+                        modelo_pronostico.error = true;
+                    }
+                } else {
+                    modelo_pronostico.error = false;
+                }
+                //}
+            }
+        });
+
+        result.campos = removerCampo(codigo_interno, result.campos);
+        result.campos.push(campo);
+    }
+
+    return result;
+};
+
+validator.validar_nivel_servicio = async (codigo_interno, material, result, list) => {
+    const campo = obtenerCampo(codigo_interno, material.campos);
+
+    if (campo) {
+        console.log('validar_' + codigo_interno);
+
+        await asyncForEach(campo.valores, async (nivel_servicio) => {
+            if (!nivel_servicio.valor) {
+                nivel_servicio.error = true;
+            } else {
+                if (isNaN(nivel_servicio.valor)) {
+                    nivel_servicio.error = true;
+                } else {
+                    const longitud = list.filter(function (item) { return item.codigo_interno == codigo_interno })[0] || null;
+
+                    if (longitud) {
+                        nivel_servicio.valor = Math.trunc(nivel_servicio.valor * Math.pow(10, longitud.decimals)) / Math.pow(10, longitud.decimals)
+                    }
+
+                    nivel_servicio.error = false;
                 }
             }
         });

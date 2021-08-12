@@ -70,7 +70,7 @@ router.post('/:id_solicitud/materialSolicitud/agregarMaterial', materialSolicitu
 
 router.put('/:id_solicitud/materialSolicitud/:id_material_solicitud/actualizarMaterial', materialSolicitudController.external.actualizarMaterial);
 
-router.post('/:id_solicitud/materialSolicitud/:id_material_solicitud/eliminarMaterial', materialSolicitudController.external.eliminarMaterial);
+ router.post('/:id_solicitud/materialSolicitud/:id_material_solicitud/eliminarMaterial', materialSolicitudController.external.eliminarMaterial);
 
 router.post('/:id_solicitud/materialSolicitud/agregarMateriales', materialSolicitudController.external.agregarMateriales);
 
@@ -97,5 +97,15 @@ router.post('/obtenerAllEquivalenciaMaterial', equivalenciaMaterialController.ob
 router.post('/borrarxIdEquivalenciaMaterial', equivalenciaMaterialController.borrarxIdEquivalenciaMaterial);
 
 router.post('/:id_solicitud/materialSolicitud/crearAmpliacion', materialSolicitudController.external.crearAmpliacion);
+router.put('/:id_solicitud/materialSolicitud/:id_material_solicitud/actualizarAmpliacion', materialSolicitudController.external.actualizarAmpliacion);
+router.post('/:id_solicitud/materialSolicitud/agregarAmpliaciones', materialSolicitudController.external.agregarAmpliaciones);
+
+router.post('/:id_solicitud/materialSolicitud/crearModificacion', materialSolicitudController.external.crearModificacion);
+router.put('/:id_solicitud/materialSolicitud/:id_material_solicitud/actualizarModificacion', materialSolicitudController.external.actualizarModificacion);
+router.post('/:id_solicitud/materialSolicitud/agregarModificaciones', materialSolicitudController.external.agregarModificaciones);
+
+router.post('/:id_solicitud/materialSolicitud/crearBloqueo', materialSolicitudController.external.crearBloqueo);
+router.put('/:id_solicitud/materialSolicitud/:id_material_solicitud/actualizarBloqueo', materialSolicitudController.external.actualizarBloqueo);
+router.post('/:id_solicitud/materialSolicitud/agregarBloqueos', materialSolicitudController.external.agregarBloqueos);
 
 module.exports = router;

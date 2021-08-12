@@ -193,8 +193,8 @@ solicitudController.crearCabecera = async (req, res) => {
                 aprobadorSolicitudObj.id_usuario_aprobador = usuarioYRolRes[i].id_usuario;
                 aprobadorSolicitudObj.nombre_usuario_aprobador = usuarioYRolRes[i].nombre_usuario;
                 aprobadorSolicitudObj.correo_usuario = usuarioYRolRes[i].correo_usuario;
-                aprobadorSolicitudObj.aprobar_enviar_correo = usuarioYRolRes[i].aprobar_enviar_correo;
-                aprobadorSolicitudObj.rechazar_enviar_correo = usuarioYRolRes[i].rechazar_enviar_correo;
+                aprobadorSolicitudObj.aprobar_enviar_correo = true;//usuarioYRolRes[i].aprobar_enviar_correo;
+                aprobadorSolicitudObj.rechazar_enviar_correo = true;//usuarioYRolRes[i].rechazar_enviar_correo;
                 if (usuarioYRolRes[i].id_rol == 2) { // 2 = Supervisor
                     aprobadorSolicitudObj.es_supervisor = true;
                     id_usuario_supervisor = usuarioYRolRes[i].id_usuario;
@@ -732,7 +732,7 @@ solicitudController.obtenerDatosDeSolicitud = async (req, res) => {
         winston.error("Error en solicitudController.obtenerDatosDeSolicitud,", error);
         res.status(500).send(error);
     }
-}
+};
 
 solicitudController.actualizarCabecera = async (req, res) => {
     const client = await postgresConn.getClient();
@@ -811,7 +811,7 @@ solicitudController.actualizarCabecera = async (req, res) => {
     } finally {
         client.release();
     }
-}
+};
 
 /*
 solicitudController.agregarAnexo = async (req, res) => {
@@ -1035,9 +1035,9 @@ solicitudController.anularSolicitud = async (req, res) => {
     } finally {
         client.release();
     }
-}
+};
 
-solicitudController.aprobacionRechazoSolicitud = async (req, res) => {
+solicitudController.aprobacionRechazoSolicitudOld = async (req, res) => {
     const client = await postgresConn.getClient();
     try {
         const response = {
@@ -1045,6 +1045,7 @@ solicitudController.aprobacionRechazoSolicitud = async (req, res) => {
             mensaje: "Error inesperado al anular de Solicitud."
         };
         winston.info("req.body: " + JSON.stringify(req.body));
+        const { tip_pm } = req.query;
         let { id_usuario, id_solicitud, id_rol, aprobado, motivo, id_motivo_rechazo } = req.body;
         // Inicio Validando parametros
         if (!utility.isNumericValue(id_usuario) || id_usuario < 1) {
@@ -1133,7 +1134,7 @@ solicitudController.aprobacionRechazoSolicitud = async (req, res) => {
             if ((posicion + 1) == listaAprobadoresRes.length) {
                 // Logica para enviar datos de Solicitud a SAP
                 // Inicio: Enviar a SAP datos de la solicitud
-                const envioSolicitudSAPRes = await materialSolicitudController.internal.enviarSAP(id_solicitud);
+                const envioSolicitudSAPRes = await materialSolicitudController.internal.enviarSAP(id_solicitud, tip_pm);
                 if (!(envioSolicitudSAPRes.resultado === 1)) {
                     await client.query("ROLLBACK");
                     response.resultado = 0;
@@ -1556,7 +1557,509 @@ solicitudController.aprobacionRechazoSolicitud = async (req, res) => {
     } finally {
         client.release();
     }
-}
+};
+
+solicitudController.aprobacionRechazoSolicitud = async (req, res) => {
+    const client = await postgresConn.getClient();
+
+    try {
+        const { tip_pm } = req.query;
+        const { id_solicitud, id_usuario, id_rol, aprobado, motivo, id_motivo_rechazo } = req.body;
+        const data = {};
+        let id_rol_nuevo = null;
+
+        //#region 0. Validaciones
+        if (!utility.isNumericValue(id_usuario) || id_usuario < 1) {
+            response.resultado = 0;
+            response.mensaje = "El campo id_usuario no tiene un valor válido. Tipo de dato: '" + (typeof id_usuario) + "', valor = " + id_usuario;
+            winston.info("response: " + JSON.stringify(response));
+            res.status(200).json(response);
+            return;
+        }
+
+        if (!utility.isNumericValue(id_solicitud) || id_solicitud < 1) {
+            response.resultado = 0;
+            response.mensaje = "El campo id_solicitud no tiene un valor válido. Tipo de dato: '" + (typeof id_solicitud) + "', valor = " + id_solicitud;
+            winston.info("response: " + JSON.stringify(response));
+            res.status(200).json(response);
+            return;
+        }
+
+        if (!utility.isNumericValue(id_rol) || id_rol < 1) {
+            response.resultado = 0;
+            response.mensaje = "El campo id_rol no tiene un valor válido. Tipo de dato: '" + (typeof id_rol) + "', valor = " + id_rol;
+            winston.info("response: " + JSON.stringify(response));
+            res.status(200).json(response);
+            return;
+        }
+
+        if ((typeof aprobado) !== 'boolean') {
+            response.resultado = 0;
+            response.mensaje = "El campo aprobado no tiene un valor válido. Tipo de dato: '" + (typeof aprobado) + "', valor = " + aprobado;
+            winston.info("response: " + JSON.stringify(response));
+            res.status(200).json(response);
+            return;
+        }
+        //#endregion
+
+        await client.query("BEGIN");
+
+        //#region 1. Obtener data
+        // --> aprobadores
+        const list_aprobadores = await aprobadorSolicitudService.listarFlujoPorIdSolicitudOrdenadoPorOrden(client, id_solicitud);
+        if (list_aprobadores.length === 0) {
+            await client.query("ROLLBACK");
+            res.status(200).json({ resultado: 0, mensaje: "No se encontró aprobadores para el id_solicitud = " + id_solicitud });
+            return;
+        }
+
+        let list_roles = [];
+        for (let index = 0; index < list_aprobadores.length; index++) {
+            const element = list_aprobadores[index];
+
+            if (!list_roles.some(item => item === element.id_rol)) {
+                list_roles.push(element.id_rol);
+            }
+        }
+
+        for (let i = 0; i < list_aprobadores.length; i++) {
+            if (list_aprobadores[i].esta_aqui === true) {
+                data.posicion = i;
+                data.id_rol = list_aprobadores[i].id_rol;
+
+                break;
+            }
+        }
+
+        for (let index = 0; index < list_roles.length; index++) {
+            const element = list_roles[index];
+
+            if (element === data.id_rol) {
+                console.log('element.id_rol === data.id_rol');
+                data.inicio_de_flujo = index === 0;
+                data.fin_de_flujo = (index + 1) === list_roles.length;
+
+                if (aprobado && !data.fin_de_flujo) {
+                    data.id_rol_siguiente = list_roles[index + 1];
+                }
+
+                if (!aprobado && !data.inicio_de_flujo) {
+                    data.id_rol_anterior = list_roles[index - 1];
+                }
+                break;
+            }
+        }
+
+        console.log('id_rol');
+        console.log(data.id_rol);
+        data.aprobadores_actuales = list_aprobadores.filter(function (item) { return item.id_rol === data.id_rol; });
+        console.log('id_rol_siguiente');
+        console.log(data.id_rol_siguiente);
+        data.aprobadores_siguientes = list_aprobadores.filter(function (item) { return item.id_rol === data.id_rol_siguiente; });
+        console.log('id_rol_anterior');
+        console.log(data.id_rol_anterior);
+        data.aprobadores_anteriores = list_aprobadores.filter(function (item) { return item.id_rol === data.id_rol_anterior; });
+
+        // --> fecha actual
+        const fecha_actual_result = await aprobadorSolicitudService.obtenerFechaActual(client);
+        const fecha_actual = fecha_actual_result[0].fecha.toISOString().replace('T', ' ').substr(0, 19);
+
+        // --> usuario request
+        const usuario_result = await usuarioService.buscarPorId(client, id_usuario);
+
+        // --> rol request
+        const rol_result = await rolService.buscarPorId(client, id_rol);
+
+        // --> seguimientos
+        const list_seguimientos = await aprobadorSolicitudService.listarSeguimientoPorIdSolicitudOrdenadoPorId(client, id_solicitud);
+        const seguimiento_actual = list_seguimientos[list_seguimientos.length - 1];
+        if (seguimiento_actual.id_estado_real == config.constantesDb.id_estado_solicitud_en_sap) {
+            await client.query("ROLLBACK");
+            res.status(200).json({ resultado: 0, mensaje: "No se puede aprobar o rechazar una Solicitud que esta en SAP." });
+            return;
+        }
+        //#endregion
+
+        //#region 2. Aprobar desaprobar
+        if (aprobado) {
+            if (data.fin_de_flujo) {
+                id_rol_nuevo = config.constantesDb.id_rol_sap;
+
+                //#region 2.1. Enviar SAP
+                const enviar_sap_result = await materialSolicitudController.internal.enviarSAP(id_solicitud, tip_pm);
+                if (!(enviar_sap_result.resultado === 1)) {
+                    await client.query("ROLLBACK");
+                    res.status(200).json({ resultado: 0, mensaje: "Ocurrio un error al enviar a SAP. " + enviar_sap_result.mensaje });
+                    return;
+                }
+                //#endregion
+
+                //#region 2.2. Actualizar flujo actual
+                for (let index = 0; index < data.aprobadores_actuales.length; index++) {
+                    const element = data.aprobadores_actuales[index];
+
+                    const flujo_actual_obj = {
+                        id: element.id,
+                        id_estado_real: element.id_estado,//
+                        nombre_estado_real: element.nombre_estado,//
+                        id_rol_real: id_rol,
+                        nombre_rol_real: rol_result[0].nombre,
+                        id_usuario_real: id_usuario,
+                        nombre_usuario_real: usuario_result[0].nombre,
+                        correo_usuario_real: usuario_result[0].usuario,
+                        fecha_ingreso: element.fecha_ingreso.toISOString().replace('T', ' ').substr(0, 19),
+                        fecha_salida: fecha_actual,
+                        estado_completado: true,
+                        motivo: null,
+                        duracion: null,
+                        esta_aqui: element.esta_aqui
+                    };
+
+                    // if (element.id_usuario_aprobador === data.id_usuario) {
+                    //     flujo_actual_obj.esta_aqui = true;
+                    // }
+
+                    const flujo_actual_result = await aprobadorSolicitudService.actualizar_flujo(client, flujo_actual_obj);
+                    if (!flujo_actual_result) {
+                        await client.query("ROLLBACK");
+                        res.status(200).json({ resultado: 0, mensaje: "Error al momento de actualizar el flujo actual." });
+                        return;
+                    }
+                }
+                //#endregion
+
+                //#region 2.3. Actualizar seguimiento actual
+                const segundos_duracion = await utilityService.extractSegundosEnBigintDeRestarTimestampString(client, fecha_actual, seguimiento_actual.fecha_ingreso.toISOString().replace('T', ' ').substr(0, 19));
+                const duracion = utility.convertSecondsInDaysHoursString(segundos_duracion[0].segundos);
+                const seguimiento_actual_obj = {
+                    id: seguimiento_actual.id,
+                    fecha_salida: fecha_actual,
+                    duracion: duracion
+                };
+
+                const seguimiento_actual_result = await aprobadorSolicitudService.actualizarSeguimiento(client, seguimiento_actual_obj);
+
+                if (!seguimiento_actual_result) {
+                    await client.query("ROLLBACK");
+                    res.status(200).json({ resultado: 0, mensaje: "Error al momento de actualizar el seguimiento actual." });
+                    return;
+                }
+                //#endregion
+
+                //#region 2.4. Agregar nuevo seguimiento
+                const usuario_sap = await usuarioService.buscarPorId(client, config.constantesDb.id_usuario_sap);
+
+                const seguimiento_nuevo_obj = {
+                    solicitud: { id: id_solicitud },
+                    id_estado_real: config.constantesDb.id_estado_solicitud_en_sap,
+                    nombre_estado_real: config.constantesDb.nombre_estado_solicitud_en_sap,
+                    id_rol_real: config.constantesDb.id_rol_sap,
+                    nombre_rol_real: config.constantesDb.nombre_rol_sap,
+                    id_usuario_real: config.constantesDb.id_usuario_sap,
+                    nombre_usuario_real: usuario_sap[0].nombre,
+                    correo_usuario_real: usuario_sap[0].usuario,
+                    fecha_ingreso: fecha_actual,
+                    motivo: motivo
+                };
+
+                const seguimiento_nuevo_result = await aprobadorSolicitudService.crearSeguimiento(client, seguimiento_nuevo_obj);
+
+                if (!(seguimiento_nuevo_result && seguimiento_nuevo_result[0].id)) {
+                    await client.query("ROLLBACK");
+                    res.status(200).json({ resultado: 0, mensaje: "Error al momento de crear el nuevo seguimiento." });
+                    return;
+                }
+                //#endregion
+            } else {
+                id_rol_nuevo = data.id_rol_siguiente;
+
+                console.log('aprobadores_siguientes');
+                console.log(data.aprobadores_siguientes);
+                let aprobador_siguiente = data.aprobadores_siguientes.filter(function (item) { return item.id_usuario == id_usuario })[0] || null;
+
+                if (!aprobador_siguiente) {
+                    aprobador_siguiente = data.aprobadores_siguientes[0];
+                }
+
+                //#region 2.1. Actualizar flujo actual
+                for (let index = 0; index < data.aprobadores_actuales.length; index++) {
+                    const element = data.aprobadores_actuales[index];
+
+                    const flujo_actual_obj = {
+                        id: element.id,
+                        id_estado_real: element.id_estado,
+                        nombre_estado_real: element.nombre_estado,
+                        id_rol_real: id_rol,
+                        nombre_rol_real: rol_result[0].nombre,
+                        id_usuario_real: id_usuario,
+                        nombre_usuario_real: usuario_result[0].nombre,
+                        correo_usuario_real: usuario_result[0].usuario,
+                        fecha_ingreso: element.fecha_ingreso.toISOString().replace('T', ' ').substr(0, 19),
+                        fecha_salida: fecha_actual,
+                        estado_completado: true,
+                        motivo: null,
+                        duracion: null,
+                        esta_aqui: false
+                    };
+
+                    const flujo_actual_result = await aprobadorSolicitudService.actualizar_flujo(client, flujo_actual_obj);
+
+                    if (!flujo_actual_result) {
+                        await client.query("ROLLBACK");
+                        res.status(200).json({ resultado: 0, mensaje: "Error al momento de actualizar el flujo actual." });
+                        return;
+                    }
+                }
+                //#endregion
+
+                //#region 2.2. Actualizar nuevo flujo
+                for (let index = 0; index < data.aprobadores_siguientes.length; index++) {
+                    const element = data.aprobadores_siguientes[index];
+                    const flujo_nuevo_obj = {
+                        id: element.id,
+                        id_estado_real: null,
+                        nombre_estado_real: null,
+                        id_rol_real: null,
+                        nombre_rol_real: null,
+                        id_usuario_real: null,
+                        nombre_usuario_real: null,
+                        correo_usuario_real: null,
+                        fecha_ingreso: fecha_actual,
+                        fecha_salida: null,
+                        estado_completado: false,
+                        motivo: null,
+                        duracion: null,
+                        esta_aqui: false
+                    };
+
+                    if (element.id === aprobador_siguiente.id) {
+                        flujo_nuevo_obj.esta_aqui = true;
+                    }
+
+                    const flujo_nuevo_result = await aprobadorSolicitudService.actualizar_flujo(client, flujo_nuevo_obj);
+
+                    if (!flujo_nuevo_result) {
+                        await client.query("ROLLBACK");
+                        res.status(200).json({ resultado: 0, mensaje: "Error al momento de actualizar el flujo siguiente." });
+                        return;
+                    }
+                }
+                //#endregion
+
+                //#region 2.3. Actualizar seguimiento actual
+                const segundos_duracion = await utilityService.extractSegundosEnBigintDeRestarTimestampString(client, fecha_actual, seguimiento_actual.fecha_ingreso.toISOString().replace('T', ' ').substr(0, 19));
+                const duracion = utility.convertSecondsInDaysHoursString(segundos_duracion[0].segundos);
+                const seguimiento_actual_obj = {
+                    id: seguimiento_actual.id,
+                    fecha_salida: fecha_actual,
+                    duracion: duracion
+                };
+
+                const seguimiento_actual_result = await aprobadorSolicitudService.actualizarSeguimiento(client, seguimiento_actual_obj);
+
+                if (!seguimiento_actual_result) {
+                    await client.query("ROLLBACK");
+                    res.status(200).json({ resultado: 0, mensaje: "Error al momento de actualizar el seguimiento actual." });
+                    return;
+                }
+                //#endregion
+
+                //#region 2.4. Agregar nuevo seguimiento
+                const seguimiento_nuevo_obj = {
+                    solicitud: { id: id_solicitud },
+                    id_estado_real: aprobador_siguiente.id_estado,
+                    nombre_estado_real: aprobador_siguiente.nombre_estado,
+                    id_rol_real: id_rol,
+                    nombre_rol_real: rol_result[0].nombre,
+                    id_usuario_real: id_usuario,
+                    nombre_usuario_real: usuario_result[0].nombre,
+                    correo_usuario_real: usuario_result[0].usuario,
+                    fecha_ingreso: fecha_actual,
+                    motivo: motivo
+                };
+
+                const seguimiento_nuevo_result = await aprobadorSolicitudService.crearSeguimiento(client, seguimiento_nuevo_obj);
+
+                if (!(seguimiento_nuevo_result && seguimiento_nuevo_result[0].id)) {
+                    await client.query("ROLLBACK");
+                    res.status(200).json({ resultado: 0, mensaje: "Error al momento de crear el nuevo seguimiento." });
+                    return;
+                }
+                //#endregion
+            }
+        } else {
+            if (data.inicio_de_flujo) {
+                await client.query("ROLLBACK");
+                res.status(200).json({ resultado: 1, mensaje: "No se puede rechazar y enviar a un usuario anterior, está en el primer usuario del flujo." });
+                return;
+            } else {
+                id_rol_nuevo = data.id_rol_anterior;
+
+                let aprobador_anterior = data.aprobadores_anteriores.filter(function (item) { return item.id_usuario == id_usuario })[0] || null;
+
+                if (!aprobador_anterior) {
+                    aprobador_anterior = data.aprobadores_anteriores[0];
+                }
+
+                //#region 2.0 Validaciones
+                // --> id_motivo_rechazo
+                if (!utility.isNumericValue(id_motivo_rechazo) || id_motivo_rechazo < 1) {
+                    await client.query("ROLLBACK");
+                    res.status(200).json({ resultado: 0, mensaje: "El campo id_motivo_rechazo no tiene un valor válido. Tipo de dato: '" + (typeof id_motivo_rechazo) + "', valor = " + id_motivo_rechazo });
+                    return;
+                }
+                //#endregion
+
+                //#region 2.1. Actualizar flujo actual
+                for (let index = 0; index < data.aprobadores_actuales.length; index++) {
+                    const element = data.aprobadores_actuales[index];
+
+                    const flujo_actual_obj = {
+                        id: element.id,
+                        id_estado_real: null,
+                        nombre_estado_real: null,
+                        id_rol_real: null,
+                        nombre_rol_real: null,
+                        id_usuario_real: null,
+                        nombre_usuario_real: null,
+                        correo_usuario_real: null,
+                        fecha_ingreso: null,
+                        fecha_salida: null,
+                        estado_completado: false,
+                        motivo: null,
+                        duracion: null,
+                        esta_aqui: false
+                    };
+                    
+                    const flujo_actual_result = await aprobadorSolicitudService.actualizar_flujo(client, flujo_actual_obj);
+                    
+                    if (!flujo_actual_result) {
+                        await client.query("ROLLBACK");
+                        res.status(200).json({ resultado: 0, mensaje: "Error al momento de actualizar el flujo actual." });
+                        return;
+                    }
+                }
+                //#endregion
+
+                //#region 2.2. Actualizar nuevo flujo
+                for (let index = 0; index < data.aprobadores_anteriores.length; index++) {
+                    const element = data.aprobadores_anteriores[index];
+                    const flujo_nuevo_obj = {
+                        id: element.id,
+                        id_estado_real: element.id_estado_real,
+                        nombre_estado_real: element.nombre_estado_real,
+                        id_rol_real: element.id_rol_real,
+                        nombre_rol_real: element.nombre_rol_real,
+                        id_usuario_real: element.id_usuario_real,
+                        nombre_usuario_real: element.nombre_usuario_real,
+                        correo_usuario_real: element.correo_usuario_real,
+                        fecha_ingreso: element.fecha_ingreso.toISOString().replace('T', ' ').substr(0, 19),
+                        fecha_salida: null,
+                        estado_completado: false,
+                        motivo: null,
+                        duracion: null,
+                        esta_aqui: false
+                    };
+
+                    if (element.id === aprobador_anterior.id) {
+                        flujo_nuevo_obj.esta_aqui = true;
+                    }
+
+                    const flujo_nuevo_result = await aprobadorSolicitudService.actualizar_flujo(client, flujo_nuevo_obj);
+
+                    if (!flujo_nuevo_result) {
+                        await client.query("ROLLBACK");
+                        res.status(200).json({ resultado: 0, mensaje: "Error al momento de actualizar el flujo anterior." });
+                        return;
+                    }
+                }
+
+                //#endregion
+
+                //#region 2.3. Actualizar seguimiento actual
+                const segundos_duracion = await utilityService.extractSegundosEnBigintDeRestarTimestampString(client, fecha_actual, seguimiento_actual.fecha_ingreso.toISOString().replace('T', ' ').substr(0, 19));
+                const duracion = utility.convertSecondsInDaysHoursString(segundos_duracion[0].segundos);
+                const seguimiento_actual_obj = {
+                    id: seguimiento_actual.id,
+                    fecha_salida: fecha_actual,
+                    duracion: duracion
+                };
+
+                const seguimiento_actual_result = await aprobadorSolicitudService.actualizarSeguimiento(client, seguimiento_actual_obj);
+
+                if (!seguimiento_actual_result) {
+                    await client.query("ROLLBACK");
+                    res.status(200).json({ resultado: 0, mensaje: "Error al momento de actualizar el seguimiento actual." });
+                    return;
+                }
+                //#endregion
+
+                //#region 2.4. Agregar nuevo seguimiento
+                const motivo_rechazo_result = await motivoRechazoService.buscarPorId(client, id_motivo_rechazo);
+
+                if (!(motivo_rechazo_result && motivo_rechazo_result.length > 0)) {
+                    await client.query("ROLLBACK");
+                    res.status(200).json({ resultado: 0, mensaje: "El campo id_motivo_rechazo no tiene un valor válido. Tipo de dato: '" + (typeof id_motivo_rechazo) + "', valor = " + id_motivo_rechazo });
+                    return;
+                }
+
+                nombre_motivo_rechazo = motivo_rechazo_result[0].nombre;                
+
+                const seguimiento_nuevo_obj = {
+                    solicitud: { id: id_solicitud },
+                    id_estado_real: aprobador_anterior.id_estado,
+                    nombre_estado_real: aprobador_anterior.nombre_estado,
+                    id_rol_real: id_rol,
+                    nombre_rol_real: rol_result[0].nombre,
+                    id_usuario_real: id_usuario,
+                    nombre_usuario_real: usuario_result[0].nombre,
+                    correo_usuario_real: usuario_result[0].usuario,
+                    fecha_ingreso: fecha_actual,
+                    motivo: motivo,
+                    id_motivo_rechazo: id_motivo_rechazo,
+                    nombre_motivo_rechazo: nombre_motivo_rechazo
+                };
+
+                const seguimiento_nuevo_result = await aprobadorSolicitudService.crearSeguimiento(client, seguimiento_nuevo_obj);
+
+                if (!(seguimiento_nuevo_result && seguimiento_nuevo_result[0].id)) {
+                    await client.query("ROLLBACK");
+                    res.status(200).json({ resultado: 0, mensaje: "Error al momento de crear el nuevo seguimiento." });
+                    return;
+                }
+                //#endregion
+            }
+        }
+        //#endregion
+
+        //#region 3. Cambiar estado solicitud
+        const estado_solicitud_result = (await estadoSolicitudService.buscarPorIdRol(client, id_rol_nuevo))[0]; console.log(estado_solicitud_result);
+        const solicitud = { id: id_solicitud, estadoSolicitud: { id: estado_solicitud_result.id }, modificado_por: id_usuario };
+        const actualizar_estado_result = await solicitudService.actualizarEstado(client, solicitud);
+        if (!actualizar_estado_result) {
+            await client.query("ROLLBACK");
+            res.status(200).json({ resultado: 0, mensaje: "No se pudo actualizar el estado de la Solicitud." });
+            return;
+        }
+        //#endregion       
+
+        await client.query('COMMIT');
+        res.status(200).json({ resultado: 1, mensaje: "" });
+
+        let respuestaCorreo = null;
+        if (aprobado) {
+            respuestaCorreo = await notificacionController.internal.notificarAprobacion(id_solicitud, id_rol);
+        } else {
+            respuestaCorreo = await notificacionController.internal.notificarRechazo(id_solicitud, id_rol, nombre_motivo_rechazo, motivo);
+        }
+    } catch (error) {
+        await client.query("ROLLBACK");
+        winston.info("Error en solicitudController.aprobacionRechazoSolicitud. Details: ", error);
+        res.status(500).send(error);
+    } finally {
+        client.release();
+    }
+};
 
 solicitudController.rechazoSolicitudADemanda = async (req, res) => {
     const client = await postgresConn.getClient();
@@ -1855,7 +2358,7 @@ solicitudController.rechazoSolicitudADemanda = async (req, res) => {
     } finally {
         client.release();
     }
-}
+};
 
 solicitudController.listarSeguimiento = async (req, res) => {
     try {
@@ -1888,7 +2391,7 @@ solicitudController.listarSeguimiento = async (req, res) => {
         winston.error("Error en solicitudController.listarSeguimiento,", error);
         res.status(500).send(error);
     }
-}
+};
 
 solicitudController.listarFlujo = async (req, res) => {
     try {
@@ -1921,7 +2424,7 @@ solicitudController.listarFlujo = async (req, res) => {
         winston.error("Error en solicitudController.listarFlujo,", error);
         res.status(500).send(error);
     }
-}
+};
 
 solicitudController.cantidadSolicitudesPorUsuario = async (req, res) => {
     const client = await postgresConn.getClient();
@@ -1974,7 +2477,7 @@ solicitudController.cantidadSolicitudesPorUsuario = async (req, res) => {
     } finally {
         client.release();
     }
-}
+};
 
 solicitudController.cantidadDeAprobacionesPorUsuario = async (req, res) => {
     const client = await postgresConn.getClient();
@@ -2027,7 +2530,7 @@ solicitudController.cantidadDeAprobacionesPorUsuario = async (req, res) => {
     } finally {
         client.release();
     }
-}
+};
 
 solicitudController.cantidadDePendientesPorUsuario = async (req, res) => {
     const client = await postgresConn.getClient();
@@ -2083,7 +2586,7 @@ solicitudController.cantidadDePendientesPorUsuario = async (req, res) => {
     } finally {
         client.release();
     }
-}
+};
 
 solicitudController.finalizarSolicitud = async (req, res) => {
     const response = {
@@ -2269,7 +2772,7 @@ solicitudController.finalizarSolicitud = async (req, res) => {
     } finally {
         client.release();
     }
-}
+};
 
 async function obtenerCorrelativo(client, id_usuario) {
     const area_usuario = await areaUsuarioService.obtenerPorUsuario(client, id_usuario);
@@ -2303,4 +2806,5 @@ async function obtenerCorrelativo(client, id_usuario) {
 
     return null;
 };
+
 module.exports = solicitudController;

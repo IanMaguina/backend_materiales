@@ -18,12 +18,12 @@ vistaPortalService.listar = async (conn, id_escenario_nivel3, id_rol, id_tipo_so
             AND rcvp.id_tipo_solicitud = $3 \
             ORDER BY rcvp.id_vista_portal, rcvp.orden", [id_escenario_nivel3, id_rol, id_tipo_solicitud]);
 
-        return queryResponse.rows;        
+        return queryResponse.rows;
     } catch (error) {
         error.stack = "\nError en vistaPortalService.listar, " + error.stack;
         throw error;
     }
-    
+
 };
 
 vistaPortalService.listarPorSolicitud = async (conn, id_solicitud, id_rol) => {
@@ -37,18 +37,18 @@ vistaPortalService.listarPorSolicitud = async (conn, id_solicitud, id_rol) => {
             WHERE s.id = $1 AND rcvp.activo = true AND rcvp.activo = true AND rcvp.id_rol = $2 \
             ORDER BY rcvp.id_vista_portal, rcvp.orden", [id_solicitud, id_rol]);
 
-        return queryResponse.rows;        
+        return queryResponse.rows;
     } catch (error) {
         error.stack = "\nError en vistaPortalService.listarPorSolicitud, " + error.stack;
         throw error;
     }
-    
+
 };
 
 vistaPortalService.listarParaEnviarSAP = async (conn, id_solicitud) => {
     try {
         const queryResponse = await conn.query(
-            "SELECT DISTINCT vp.id, vp.nombre, rcvp.regla_vista \
+            "SELECT DISTINCT vp.id, vp.nombre, cv.codigo_interno \
             FROM dino.tsolicitud s \
             INNER JOIN dino.treglas_campo_vista_portal rcvp ON rcvp.id_escenario_nivel3 = s.id_escenario_nivel3 \
             AND rcvp.id_tipo_solicitud = s.id_tipo_solicitud \
@@ -56,16 +56,30 @@ vistaPortalService.listarParaEnviarSAP = async (conn, id_solicitud) => {
             INNER JOIN dino.tcampo_vista cv ON cv.id = rcvp.id_campo_vista \
             WHERE s.id = $1 \
             AND rcvp.activo = true \
-			AND (rcvp.campo_visible = true OR \
-				 (rcvp.campo_visible = false AND COALESCE(rcvp.valor_defecto, '') <> '')) \
-            ORDER BY vp.nombre ", [id_solicitud]);
+            ORDER BY vp.nombre", [id_solicitud]);
 
-        return queryResponse.rows;        
+        return queryResponse.rows;
     } catch (error) {
         error.stack = "\nError en vistaPortalService.listarParaEnviarSAP, " + error.stack;
         throw error;
     }
-    
+};
+
+vistaPortalService.listarReglas = async (conn, id_tipo_solicitud, id_escenario_nivel3) => {
+    try {
+        const queryResponse = await conn.query(
+            "SELECT cv.id, cv.codigo_interno, rcvp.valor_defecto \
+            FROM dino.treglas_campo_vista_portal rcvp \
+            INNER JOIN dino.tcampo_vista cv ON cv.id = rcvp.id_campo_vista \
+            WHERE id_tipo_solicitud = $1 \
+            AND id_escenario_nivel3 = $2 \
+            AND id_campo_vista IN (10, 11)", [id_tipo_solicitud, id_escenario_nivel3]);
+
+        return queryResponse.rows;
+    } catch (error) {
+        error.stack = "\nError en vistaPortalService.listarReglas, " + error.stack;
+        throw error;
+    }
 };
 
 module.exports = vistaPortalService;

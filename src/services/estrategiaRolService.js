@@ -4,7 +4,9 @@ const estrategiaRolService = {};
 
 estrategiaRolService.crear = async (conn, estrategiaRol) => {
     try {
-        const queryResponse = await conn.query("INSERT INTO dino.testrategia_rol (orden, id_rol, id_estrategia, activo) VALUES($1, $2, $3, $4) RETURNING id",
+        const queryResponse = await conn.query(
+            "INSERT INTO dino.testrategia_rol (orden, id_rol, id_estrategia, activo, aprobar_enviar_correo, rechazar_enviar_correo) \
+            VALUES($1, $2, $3, $4, true, true) RETURNING id",
         [estrategiaRol.orden, estrategiaRol.rol.id, estrategiaRol.estrategia.id, estrategiaRol.activo]);
         return queryResponse.rows;
     } catch (error) {

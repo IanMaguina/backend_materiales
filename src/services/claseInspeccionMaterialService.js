@@ -95,4 +95,22 @@ service.eliminarPorMaterial = async (conn, id_material_solicitud) => {
     }
 };
 
+service.listarParaEnviarSAP = async (conn, id_solicitud) => {
+    try {
+        const queryResponse = await conn.query(
+            "SELECT cim.id_material_solicitud, ci.codigo_sap \
+            FROM dino.tclase_inspeccion_material_solicitud cim \
+            LEFT JOIN dino.tclase_inspeccion ci ON ci.id_clase_inspeccion = cim.id_clase_inspeccion \
+            WHERE id_material_solicitud IN (select id from dino.tmaterial_solicitud where id_solicitud = $1) \
+            AND error = false \
+            ORDER BY cim.id_material_solicitud",
+            [id_solicitud]);
+
+        return queryResponse.rows;
+    } catch (error) {
+        error.stack = "\nError en claseInspeccionMaterialService.listarParaEnviarSAP, " + error.stack;
+        throw error;
+    }
+};
+
 module.exports = service;

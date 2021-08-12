@@ -8,4 +8,6 @@ router.get('/listarDiccionarioDeNombres', campoController.listarDiccionarioDeNom
 
 router.get('/listarTodo', campoController.listarTodo);
 
+router.get('/listarCamposReglasxEscenario3', campoController.listarCampoReglasxEscenario3);
+
 module.exports = router;

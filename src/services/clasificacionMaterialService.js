@@ -25,6 +25,7 @@ service.listarPorSolicitud = async (conn, id_solicitud) => {
             INNER JOIN dino.tmaterial_solicitud ms On ms.id = cm.id_material_solicitud \
             LEFT JOIN dino.tclasificacion c ON c.id_clasificacion = cm.id_clasificacion \
             WHERE id_material_solicitud IN (select id from dino.tmaterial_solicitud where id_solicitud = $1) \
+            AND cm.error = false \
             ORDER BY cm.id_material_solicitud, cm.id_clasificacion",
             [id_solicitud]);
 

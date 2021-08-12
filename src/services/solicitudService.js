@@ -251,7 +251,8 @@ solicitudService.actualizarCabecera = async (conn, solicitud) => {
 solicitudService.actualizarEstado = async (conn, solicitud) => {
     try {
         const queryResponse = await conn.query("UPDATE dino.tsolicitud SET fecha_modificacion=NOW(), modificado_por=$1, id_estado_solicitud=$2 WHERE id=$3"
-            , [solicitud.modificado_por, solicitud.estadoSolicitud.id, solicitud.id]);
+            , [solicitud.modificado_por, solicitud.estadoSolicitud["id"], solicitud.id]);
+         console.log(solicitud.modificado_por+"---"+solicitud.estadoSolicitud["id"]+"---"+solicitud.id+"---"+"UPDATE dino.tsolicitud SET fecha_modificacion=NOW(), modificado_por=$1, id_estado_solicitud=$2 WHERE id=$3")   
         if (queryResponse && queryResponse.rowCount == 1) {
             return true;
         } else {
@@ -389,7 +390,7 @@ solicitudService.cantidadPendientesPorListaEstrategiaYIdUsuario = async (conn, l
 solicitudService.obtenerParaValidar = async (conn, id_solicitud) => {
     try {
         const queryResponse = await conn.query(
-            'SELECT s.id \
+            'SELECT s.id, s.id_tipo_solicitud, id_escenario_nivel3 \
             FROM dino.tsolicitud s \
             WHERE s.id = $1', [id_solicitud]);
 
@@ -864,7 +865,7 @@ solicitudService.buscarMisPendientes = async (conn, filtros) => {
 solicitudService.anularItemsSolicitud = async (conn, id_solicitud) => {
     try {
         const queryResponse = await conn.query("update dino.tmaterial_solicitud set denominacion= LEFT('anulado-' || denominacion || '-' || id, 40) where id_solicitud = $1", [id_solicitud]);
-        if (queryResponse && queryResponse.rowCount >= 1) {
+        if (queryResponse && queryResponse.rowCount >= 0) {
             return true;
         } else {
             return false;

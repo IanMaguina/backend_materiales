@@ -53,7 +53,8 @@ service.listarPorSolicitudParaSAP = async (conn, id_solicitud) => {
             ms.limite_exceso_sum_ilimitado, ms.modelo_pronostico, ms.periodo_pasado, ms.periodo_pronostico, ms.limite_alarma, \
             ms.anular_automaticamente, ms.optimizacion_parametro, ms.estructura_cuantica, ms.origen_material, ms.tamano_lote, \
             am.nombre \"nombre_anexo\", am.ruta_anexo, ms.texto_compra, ms.texto_comercial, umc.codigo_sap \"unidad_medida_pedido\", \
-            ms.inicializacion, ms.grado_optimizacion, ms.ind_ped_automa, ms.exceso_sum_ilimitado, ms.ump_var, ms.proc_sel_modelo, ms.ampliacion \
+            ms.inicializacion, ms.grado_optimizacion, ms.ind_ped_automa, ms.exceso_sum_ilimitado, ms.ump_var, ms.proc_sel_modelo, ms.ampliacion, \
+            ms.vista_planificacion  \
             FROM dino.tsolicitud s \
             INNER JOIN dino.tescenario_nivel3 en3 ON en3.id = s.id_escenario_nivel3 \
             INNER JOIN dino.tmaterial_solicitud ms ON ms.id_solicitud = s.id \
@@ -107,10 +108,101 @@ service.listarPorDenominacionParaAmpliacion = async (conn, denominacion) => {
             INNER JOIN dino.tmaterial_solicitud_borrador mb ON mb.id_material_solicitud = ms.id \
             WHERE UPPER(COALESCE(ms.denominacion, mb.denominacion)) = upper($1) AND ms.Ampliacion = \'X\'',
             [denominacion]);
-console.log(queryResponse.rows);
+
         return queryResponse.rows;
     } catch (error) {
         error.stack = "\nError en materialSolicitudService.listarPorDenominacion. Details: " + error.stack;
+        throw error;
+    }
+};
+
+service.obtenerParaAmpliacion = async (conn, denominacion, centro_codigo_sap, almacen_codigo_sap) => {
+    try {
+        const queryResponse = await conn.query(
+            'SELECT s.id "id_solicitud", ms.id "id_material_solicitud", \
+            COALESCE(ms.denominacion, mb.denominacion) "denominacion", \
+            COALESCE(ms.centro_codigo_sap, mb.centro_codigo_sap) "centro_codigo_sap", \
+            COALESCE(ms.almacen_codigo_sap, mb.almacen_codigo_sap) "almacen_codigo_sap", \
+            ms.ampliacion \
+            FROM dino.tsolicitud s \
+            INNER JOIN dino.tmaterial_solicitud ms ON ms.id_solicitud = s.id \
+            INNER JOIN dino.tmaterial_solicitud_borrador mb ON mb.id_material_solicitud = ms.id \
+            WHERE UPPER(COALESCE(ms.denominacion, mb.denominacion)) = upper($1) \
+            AND COALESCE(ms.centro_codigo_sap, mb.centro_codigo_sap) = $2 \
+            AND COALESCE(ms.almacen_codigo_sap, mb.almacen_codigo_sap) = $3 \
+            AND ms.Ampliacion = \'X\' \
+            AND s.id_tipo_solicitud = 2 \
+            AND s.id_estado_solicitud NOT IN (2, 9)',
+            [denominacion, centro_codigo_sap, almacen_codigo_sap]);
+
+        if (queryResponse.rows.length > 0) {
+            return queryResponse.rows[0];
+        } else {
+            return null;
+        }
+
+    } catch (error) {
+        error.stack = "\nError en materialSolicitudService.obtener. Details: " + error.stack;
+        throw error;
+    }
+};
+
+service.obtenerParaModificacion = async (conn, material_codigo_sap, centro_codigo_sap, almacen_codigo_sap) => {
+    try {
+        const queryResponse = await conn.query(
+            'SELECT ms.id "id_material_solicitud", \
+            COALESCE(ms.denominacion, mb.denominacion) "denominacion", \
+            COALESCE(ms.centro_codigo_sap, mb.centro_codigo_sap) "centro_codigo_sap", \
+            COALESCE(ms.almacen_codigo_sap, mb.almacen_codigo_sap) "almacen_codigo_sap", \
+            ms.ampliacion \
+            FROM dino.tsolicitud s \
+            INNER JOIN dino.tmaterial_solicitud ms ON ms.id_solicitud = s.id \
+            INNER JOIN dino.tmaterial_solicitud_borrador mb ON mb.id_material_solicitud = ms.id \
+            WHERE ms.material_codigo_sap = $1 \
+            AND COALESCE(ms.centro_codigo_sap, mb.centro_codigo_sap) = $2 \
+            AND COALESCE(ms.almacen_codigo_sap, mb.almacen_codigo_sap) = $3 \
+            AND s.id_tipo_solicitud = 3 \
+            AND s.id_estado_solicitud NOT IN (2, 9)',
+            [material_codigo_sap, centro_codigo_sap, almacen_codigo_sap]);
+
+        if (queryResponse.rows.length > 0) {
+            return queryResponse.rows[0];
+        } else {
+            return null;
+        }
+
+    } catch (error) {
+        error.stack = "\nError en materialSolicitudService.obtenerParaModificacion. Details: " + error.stack;
+        throw error;
+    }
+};
+
+service.obtenerParaBloqueo = async (conn, material_codigo_sap, centro_codigo_sap, almacen_codigo_sap) => {
+    try {
+        const queryResponse = await conn.query(
+            'SELECT ms.id "id_material_solicitud", \
+            COALESCE(ms.denominacion, mb.denominacion) "denominacion", \
+            COALESCE(ms.centro_codigo_sap, mb.centro_codigo_sap) "centro_codigo_sap", \
+            COALESCE(ms.almacen_codigo_sap, mb.almacen_codigo_sap) "almacen_codigo_sap", \
+            ms.ampliacion \
+            FROM dino.tsolicitud s \
+            INNER JOIN dino.tmaterial_solicitud ms ON ms.id_solicitud = s.id \
+            INNER JOIN dino.tmaterial_solicitud_borrador mb ON mb.id_material_solicitud = ms.id \
+            WHERE ms.material_codigo_sap = $1 \
+            AND COALESCE(ms.centro_codigo_sap, mb.centro_codigo_sap) = $2 \
+            AND COALESCE(ms.almacen_codigo_sap, mb.almacen_codigo_sap) = $3 \
+            AND s.id_tipo_solicitud = 4 \
+            AND s.id_estado_solicitud NOT IN (2, 9)',
+            [material_codigo_sap, centro_codigo_sap, almacen_codigo_sap]);
+
+        if (queryResponse.rows.length > 0) {
+            return queryResponse.rows[0];
+        } else {
+            return null;
+        }
+
+    } catch (error) {
+        error.stack = "\nError en materialSolicitudService.obtenerParaBloqueo. Details: " + error.stack;
         throw error;
     }
 };
@@ -229,7 +321,7 @@ service.crear = async (conn, id_solicitud, material) => {
 
 service.crearAmpliacion = async (conn, material) => {
     try {
-       
+
         const result = await conn.query(
             'INSERT INTO dino.tmaterial_solicitud (material_codigo_modelo, material_codigo_sap, ampliacion, peso_bruto, id_solicitud, id_unidad_medida_base, denominacion, id_grupo_tipo_posicion, id_verificacion_disponibilidad, id_grupo_transporte, id_grupo_carga, id_unidad_medida_peso, sector, formula_concreto, codigo_ean, tipo_ean, clasificacion_fiscal, id_unidad_medida_venta, stock_negativo, id_unidad_medida_pedido, precio_estandar, precio_variable, id_unidad_medida_almacen, id_tipo_mrp_caract_plani, id_calculo_tamano_lote, id_clase_aprovis, co_producto, tiempo_fab_propia_pn2, plaza_entrega_prev, stock_seguridad_pn2, stock_seguridad_min_pn2, nivel_servicio_pn2, id_indicador_periodo, id_grupo_estrategia, id_planf_neces_mixtas, id_individual_colectivo, rechazo_componente, sujeto_lote, id_unidad_medida_fabricacion, periodo_pasado, periodo_pronostico, id_inicializacion, limite_alarma, anular_automaticamente, optimizacion_parametro, estructura_cuantica, origen_material, tamano_lote, criticos, estrategicos, almacen_codigo_sap, centro_codigo_sap, centro_beneficio_codigo_sap, grupo_planif_necesidades, alm_aprov_ext_pn2_almacen, alm_aprov_ext_pn2_centro, almacen_produccion, almacen_produccion_centro, planif_necesidades, aprovis_especial, clave_horizonte, categoria_valoracion, grupo_imputacion_material, jerarquia_producto, grupo_tipo_posicion, tipo_mrp_caract_plani, calculo_tamano_lote, clase_aprovis, indicador_periodo, grupo_estrategia, planf_neces_mixtas, individual_colectivo, dcto_pronto_pago, ramo, ump_var, verificacion_disponibilidad, grupo_transporte, grupo_carga, idioma, grupo_tipo_posicion_gral, control_precio, modelo_pronostico, grupo_compra, determinacion_precio, grupo_estadistica_mat, grupo_material1, grupo_material2, partida_arancelaria, ubicacion, toma_retrograda, grupo_articulo, texto_comercial, texto_compra, mensaje_error_sap, canal_distribucion, cantidad_base, limite_exceso_sum_ilimitado, tipo_material, inicializacion, grado_optimizacion, proc_sel_modelo, id_responsable_control_produccion, id_perfil_control_fabricacion, organizacion_ventas, precio_base, moneda, ind_ped_automa, exceso_sum_ilimitado, existe_error_sap) \
             SELECT material_codigo_modelo, material_codigo_sap, $4, peso_bruto, id_solicitud, id_unidad_medida_base, denominacion, id_grupo_tipo_posicion, id_verificacion_disponibilidad, id_grupo_transporte, id_grupo_carga, id_unidad_medida_peso, sector, formula_concreto, codigo_ean, tipo_ean, clasificacion_fiscal, id_unidad_medida_venta, stock_negativo, id_unidad_medida_pedido, precio_estandar, precio_variable, id_unidad_medida_almacen, id_tipo_mrp_caract_plani, id_calculo_tamano_lote, id_clase_aprovis, co_producto, tiempo_fab_propia_pn2, plaza_entrega_prev, stock_seguridad_pn2, stock_seguridad_min_pn2, nivel_servicio_pn2, id_indicador_periodo, id_grupo_estrategia, id_planf_neces_mixtas, id_individual_colectivo, rechazo_componente, sujeto_lote, id_unidad_medida_fabricacion, periodo_pasado, periodo_pronostico, id_inicializacion, limite_alarma, anular_automaticamente, optimizacion_parametro, estructura_cuantica, origen_material, tamano_lote, criticos, estrategicos, $3, $2, centro_beneficio_codigo_sap, grupo_planif_necesidades, alm_aprov_ext_pn2_almacen, alm_aprov_ext_pn2_centro, almacen_produccion, almacen_produccion_centro, planif_necesidades, aprovis_especial, clave_horizonte, categoria_valoracion, grupo_imputacion_material, jerarquia_producto, grupo_tipo_posicion, tipo_mrp_caract_plani, calculo_tamano_lote, clase_aprovis, indicador_periodo, grupo_estrategia, planf_neces_mixtas, individual_colectivo, dcto_pronto_pago, ramo, ump_var, verificacion_disponibilidad, grupo_transporte, grupo_carga, idioma, grupo_tipo_posicion_gral, control_precio, modelo_pronostico, grupo_compra, determinacion_precio, grupo_estadistica_mat, grupo_material1, grupo_material2, partida_arancelaria, ubicacion, toma_retrograda, grupo_articulo, texto_comercial, texto_compra, mensaje_error_sap, canal_distribucion, cantidad_base, limite_exceso_sum_ilimitado, tipo_material, inicializacion, grado_optimizacion, proc_sel_modelo, id_responsable_control_produccion, id_perfil_control_fabricacion, organizacion_ventas, precio_base, moneda, ind_ped_automa, exceso_sum_ilimitado, existe_error_sap \
@@ -393,7 +485,7 @@ service.obtenerParaValidar = async (conn, id_material_solicitud) => {
         const queryResponse = await conn.query(
             'SELECT \
                 b.centro_codigo_sap, b.centro_codigo_sap_error, \
-                m.almacen_codigo_sap, m.denominacion, m.ampliacion \
+                m.almacen_codigo_sap, m.denominacion, m.ampliacion, m.material_codigo_sap \
             FROM dino.tmaterial_solicitud m \
             INNER JOIN dino.tmaterial_solicitud_borrador b on b.id_material_solicitud = m.id \
             WHERE m.id = $1', [id_material_solicitud]);
@@ -615,6 +707,9 @@ function obtenerScriptParaListar() {
     m.moneda, b.moneda "moneda_borrador", b.moneda_error, \
     m.ind_ped_automa, b.ind_ped_automa "ind_ped_automa_borrador", b.ind_ped_automa_error, \
     m.exceso_sum_ilimitado, b.exceso_sum_ilimitado "exceso_sum_ilimitado_borrador", b.exceso_sum_ilimitado_error, \
+    m.vista_planificacion, b.vista_planificacion "vista_planificacion_borrador", b.vista_planificacion_error, \
+    m.precio_cotizacion, b.precio_cotizacion "precio_cotizacion_borrador", b.precio_cotizacion_error, \
+    m.periodo_vida, b.periodo_vida "periodo_vida_borrador", b.periodo_vida_error, \
     mensaje_error_sap, existe_error_sap \
     FROM dino.tmaterial_solicitud m \
     INNER JOIN dino.tmaterial_solicitud_borrador b on b.id_material_solicitud = m.id \
@@ -941,6 +1036,7 @@ function obtenerScriptParaInsertar(campos, tipo_tabla) {
             case enums.codigo_interno.limite_exceso_sum_ilimitado: //89
                 script_insert_valor_other(enums.codigo_interno.limite_exceso_sum_ilimitado, tipo_tabla, campo, script);
                 break;
+
             case enums.codigo_interno.modelo_pronostico: //[91]
                 script_insert_valor_texto(enums.codigo_interno.modelo_pronostico, tipo_tabla, campo, script);
                 break;
@@ -977,6 +1073,7 @@ function obtenerScriptParaInsertar(campos, tipo_tabla) {
             case enums.codigo_interno.tamano_lote: //102
                 script_insert_valor_other(enums.codigo_interno.tamano_lote, tipo_tabla, campo, script);
                 break;
+
             case enums.codigo_interno.clase_inspeccion_tab: //107
                 console.log("script_insert: Not implemented " + enums.codigo_interno.clase_inspeccion_tab);
                 break;
@@ -1009,6 +1106,15 @@ function obtenerScriptParaInsertar(campos, tipo_tabla) {
                 break;
             case enums.codigo_interno.exceso_sum_ilimitado: //117
                 script_insert_valor_texto(enums.codigo_interno.exceso_sum_ilimitado, tipo_tabla, campo, script);
+                break;
+            case enums.codigo_interno.vista_planificacion: //118
+                script_insert_valor_texto(enums.codigo_interno.vista_planificacion, tipo_tabla, campo, script);
+                break;
+            case enums.codigo_interno.precio_cotizacion: //119
+                script_insert_valor_other(enums.codigo_interno.precio_cotizacion, tipo_tabla, campo, script);
+                break;
+            case enums.codigo_interno.periodo_vida: //120
+                script_insert_valor_other(enums.codigo_interno.periodo_vida, tipo_tabla, campo, script);
                 break;
             case enums.codigo_interno.material_codigo_sap: //200
                 script_insert_valor_texto(enums.codigo_interno.material_codigo_sap, tipo_tabla, campo, script);
@@ -1279,6 +1385,7 @@ function obtenerScriptParaActualizar(campos, tipo_tabla) {
             case enums.codigo_interno.limite_exceso_sum_ilimitado: //[89]
                 script = script_update_valor_other(enums.codigo_interno.limite_exceso_sum_ilimitado, tipo_tabla, campo, script);
                 break;
+
             case enums.codigo_interno.modelo_pronostico: //[91]
                 script = script_update_valor_texto(enums.codigo_interno.modelo_pronostico, tipo_tabla, campo, script);
                 break;
@@ -1315,6 +1422,7 @@ function obtenerScriptParaActualizar(campos, tipo_tabla) {
             case enums.codigo_interno.tamano_lote: //[102]
                 script = script_update_valor_other(enums.codigo_interno.tamano_lote, tipo_tabla, campo, script);
                 break;
+
             case enums.codigo_interno.clase_inspeccion_tab: //107
                 break;
             case enums.codigo_interno.criticos: //[108]
@@ -1346,6 +1454,15 @@ function obtenerScriptParaActualizar(campos, tipo_tabla) {
                 break;
             case enums.codigo_interno.exceso_sum_ilimitado: //[117]
                 script = script_update_valor_texto(enums.codigo_interno.exceso_sum_ilimitado, tipo_tabla, campo, script);
+                break;
+            case enums.codigo_interno.vista_planificacion: //[118]
+                script = script_update_valor_texto(enums.codigo_interno.vista_planificacion, tipo_tabla, campo, script);
+                break;
+            case enums.codigo_interno.precio_cotizacion: //[119]
+                script = script_update_valor_other(enums.codigo_interno.precio_cotizacion, tipo_tabla, campo, script);
+                break;
+            case enums.codigo_interno.periodo_vida: //[120]
+                script = script_update_valor_other(enums.codigo_interno.periodo_vida, tipo_tabla, campo, script);
                 break;
             case enums.codigo_interno.material_codigo_sap: //[200]
                 script = script_update_valor_texto(enums.codigo_interno.material_codigo_sap, tipo_tabla, campo, script);
