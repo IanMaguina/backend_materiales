@@ -6,6 +6,12 @@
 # Node artifact files
 node_modules/
 dist/
+# cambios 
+jobs/
+src/config.js
+src/credentials/
+z_configuracion
+app.yaml
 
 # Compiled Java class files
 *.class
