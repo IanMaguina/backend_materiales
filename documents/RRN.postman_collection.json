@@ -1,0 +1,665 @@
+{
+	"info": {
+		"_postman_id": "4a60ca3b-4653-4a09-9788-0318b134bb25",
+		"name": "RRN",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Materiales",
+			"item": [
+				{
+					"name": "almacen/listar",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/almacen/listar?centro_codigo_sap=3001",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"almacen",
+								"listar"
+							],
+							"query": [
+								{
+									"key": "centro_codigo_sap",
+									"value": "3001"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "campo/listar",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/campo/listar?id_escenario_nivel3=1&id_rol=1&id_tipo_solicitud=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"campo",
+								"listar"
+							],
+							"query": [
+								{
+									"key": "id_escenario_nivel3",
+									"value": "1"
+								},
+								{
+									"key": "id_rol",
+									"value": "1"
+								},
+								{
+									"key": "id_tipo_solicitud",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "campo/listarDiccionarioDeNombres",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/campo/listarDiccionarioDeNombres?id_escenario_nivel3=1&id_rol=1&id_tipo_solicitud=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"campo",
+								"listarDiccionarioDeNombres"
+							],
+							"query": [
+								{
+									"key": "id_escenario_nivel3",
+									"value": "1"
+								},
+								{
+									"key": "id_rol",
+									"value": "1"
+								},
+								{
+									"key": "id_tipo_solicitud",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "canalDistribucion/listarTodo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/canalDistribucion/listarTodo",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"canalDistribucion",
+								"listarTodo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "centro/listar?codigo_sociedad=2020",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/centro/listar?codigo_sociedad=2020",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"centro",
+								"listar"
+							],
+							"query": [
+								{
+									"key": "codigo_sociedad",
+									"value": "2020"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "centroBeneficio/listarTodo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/centroBeneficio/listarTodo",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"centroBeneficio",
+								"listarTodo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "clasificacion/listarTodo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/clasificacion/listarTodo",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"clasificacion",
+								"listarTodo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "maestro/areaUsuario/listarTodo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/maestro/areaUsuario/listarTodo",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"maestro",
+								"areaUsuario",
+								"listarTodo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "maestro/escenarioNivel1/listarPorIdSociedad",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/maestro/escenarioNivel1/listarPorIdSociedad?id_sociedad=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"maestro",
+								"escenarioNivel1",
+								"listarPorIdSociedad"
+							],
+							"query": [
+								{
+									"key": "id_sociedad",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "maestro/escenarioNivel2/listarPorIdEscenarioNivel1",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/maestro/escenarioNivel2/listarPorIdEscenarioNivel1?id_escenario_nivel1=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"maestro",
+								"escenarioNivel2",
+								"listarPorIdEscenarioNivel1"
+							],
+							"query": [
+								{
+									"key": "id_escenario_nivel1",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "maestro/escenarioNivel3/listarPorIdEscenarioNivel2",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/maestro/escenarioNivel3/listarPorIdEscenarioNivel2?id_escenario_nivel2=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"maestro",
+								"escenarioNivel3",
+								"listarPorIdEscenarioNivel2"
+							],
+							"query": [
+								{
+									"key": "id_escenario_nivel2",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "maestro/escenarioNivel3/listarPorIdEscenarioNivel3?id_escenario_nivel3=1",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/maestro/escenarioNivel3/listarPorIdEscenarioNivel3?id_escenario_nivel3=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"maestro",
+								"escenarioNivel3",
+								"listarPorIdEscenarioNivel3"
+							],
+							"query": [
+								{
+									"key": "id_escenario_nivel3",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "maestro/escenarioNivel3/listarTodo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/maestro/escenarioNivel3/listarTodo",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"maestro",
+								"escenarioNivel3",
+								"listarTodo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "materiales/listarMateriales",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/solicitud/6/materialSolicitud/listarMateriales?id_rol=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"solicitud",
+								"6",
+								"materialSolicitud",
+								"listarMateriales"
+							],
+							"query": [
+								{
+									"key": "id_rol",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "materiales/actualizarMaterial",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"material\": {        \r\n        \"campos\": [{\r\n                \"codigo_interno\": \"peso_bruto\",\r\n                \"valor\": \"66\"\r\n            }\r\n        ]\r\n    }\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4400/solicitud/6/materialSolicitud/143/actualizarMaterial?id_rol=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"solicitud",
+								"6",
+								"materialSolicitud",
+								"143",
+								"actualizarMaterial"
+							],
+							"query": [
+								{
+									"key": "id_rol",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "materiales/agregarMaterial",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "    {\r\n        \"material\": {\r\n            \"campos\": [{\r\n                    \"codigo_interno\": \"denominacion\",\r\n                    \"valor\": \"solicitud arsa 14\"\r\n                }, {\r\n                    \"codigo_interno\": \"unidad_medida_base\",\r\n                    \"valor\": \"KG\"\r\n                }, {\r\n                    \"codigo_interno\": \"peso_bruto\",\r\n                    \"valor\": \"33\"\r\n                }, {\r\n                    \"codigo_interno\": \"unidad_medida_peso\",\r\n                    \"valor\": \"KG\"\r\n                }, {\r\n                    \"codigo_interno\": \"centro\",\r\n                    \"valor\": \"9903\"\r\n                }, {\r\n                    \"codigo_interno\": \"centro_beneficio\",\r\n                    \"valor\": \"DUMMY_GH00\"\r\n                }, {\r\n                    \"codigo_interno\": \"organizacion_ventas\",\r\n                    \"valor\": \"1000\"\r\n                }, {\r\n                    \"codigo_interno\": \"canal_distribucion\",\r\n                    \"valor\": \"01\"\r\n                }, {\r\n                    \"codigo_interno\": \"almacen\",\r\n                    \"valor\": \"2022\"\r\n                }, {\r\n                    \"codigo_interno\": \"clase\",\r\n                    \"valores\": [{\r\n                            \"valor\": \"002111\"\r\n                        }, {\r\n                            \"valor\": \"00301\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }\r\n    }\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4400/solicitud/6/materialSolicitud/agregarMaterial?id_rol=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"solicitud",
+								"6",
+								"materialSolicitud",
+								"agregarMaterial"
+							],
+							"query": [
+								{
+									"key": "id_rol",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "materiales/eliminarMaterial",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/solicitud/6/materialSolicitud/143/eliminarMaterial",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"solicitud",
+								"6",
+								"materialSolicitud",
+								"143",
+								"eliminarMaterial"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "materiales/agregarMateriales",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"materiales\": [{\r\n            \"id_material_solicitud\":145,\r\n            \"campos\": [{\r\n                    \"codigo_interno\": \"denominacion\",\r\n                    \"valor\": \"producto ACTUALIZADO\"\r\n                }\r\n            ]\r\n        }, {\r\n            \"campos\": [{\r\n                    \"codigo_interno\": \"denominacion\",\r\n                    \"valor\": \"producto AR\"\r\n                }, {\r\n                    \"codigo_interno\": \"unidad_medida_base\",\r\n                    \"valor\": \"KG\"\r\n                }, {\r\n                    \"codigo_interno\": \"peso_bruto\",\r\n                    \"valor\": \"15\"\r\n                }, {\r\n                    \"codigo_interno\": \"unidad_medida_peso\",\r\n                    \"valor\": \"KG\"\r\n                }, {\r\n                    \"codigo_interno\": \"centro\",\r\n                    \"valor\": \"3001\"\r\n                }, {\r\n                    \"codigo_interno\": \"centro_beneficio\",\r\n                    \"valor\": \"3001\"\r\n                }, {\r\n                    \"codigo_interno\": \"organizacion_ventas\",\r\n                    \"valor\": \"100\"\r\n                }, {\r\n                    \"codigo_interno\": \"canal_distribucion\",\r\n                    \"valor\": \"01\"\r\n                }, {\r\n                    \"codigo_interno\": \"almacen\",\r\n                    \"valor\": \"3002\"\r\n                }, {\r\n                    \"codigo_interno\": \"clase\",\r\n                    \"valores\": [{\r\n                            \"valor\": \"00211\"\r\n                        }, {\r\n                            \"valor\": \"00301\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4400/solicitud/6/materialSolicitud/agregarMateriales?id_rol=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"solicitud",
+								"6",
+								"materialSolicitud",
+								"agregarMateriales"
+							],
+							"query": [
+								{
+									"key": "id_rol",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "notificaion/notificarAprobacion",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/notificaion/notificarAprobacion?id_solicitud=6&id_rol=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"notificaion",
+								"notificarAprobacion"
+							],
+							"query": [
+								{
+									"key": "id_solicitud",
+									"value": "6"
+								},
+								{
+									"key": "id_rol",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "notificaion/notificarRechazo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/notificaion/notificarRechazo?id_solicitud=6&id_rol=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"notificaion",
+								"notificarRechazo"
+							],
+							"query": [
+								{
+									"key": "id_solicitud",
+									"value": "6"
+								},
+								{
+									"key": "id_rol",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "maestro/escenarioNivel3/listarPorFiltros",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:4400/maestro/escenarioNivel3/listarPorFiltros?id_usuario=1&id_rol=1&id_tipo_solicitud=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4400",
+							"path": [
+								"maestro",
+								"escenarioNivel3",
+								"listarPorFiltros"
+							],
+							"query": [
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "id_rol",
+									"value": "1"
+								},
+								{
+									"key": "id_tipo_solicitud",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
